@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node --max-old-space-size=8192 node_modules/tsx/dist/cli.mjs index.ts",
-    "dev": "node --max-old-space-size=8192 node_modules/tsx/dist/cli.mjs index.ts",
+    "start": "node --max-old-space-size=8192 node_modules/tsx/dist/cli.mjs --tsconfig tsconfig.json index.ts",
+    "dev": "node --max-old-space-size=8192 node_modules/tsx/dist/cli.mjs --tsconfig tsconfig.json index.ts",
     "build": "echo 'Server build completed'"
   },
   "dependencies": {
