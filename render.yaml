@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: gigglebuz-admin
+    env: node
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        fromSecret: mongodb_uri
+      - key: JWT_SECRET
+        fromSecret: jwt_secret
+      - key: CASHFREE_APP_ID
+        fromSecret: cashfree_app_id
+      - key: CASHFREE_SECRET_KEY
+        fromSecret: cashfree_secret_key
+      - key: TWO_FACTOR_API_KEY
+        fromSecret: two_factor_api_key
+      - key: FIREBASE_PROJECT_ID
+        fromSecret: firebase_project_id
+      - key: FIREBASE_PRIVATE_KEY_ID
+        fromSecret: firebase_private_key_id
+      - key: FIREBASE_PRIVATE_KEY
+        fromSecret: firebase_private_key
+      - key: FIREBASE_CLIENT_EMAIL
+        fromSecret: firebase_client_email
+      - key: FIREBASE_CLIENT_ID
+        fromSecret: firebase_client_id
+      - key: ADMIN_DEFAULT_PASSWORD
+        fromSecret: admin_default_password

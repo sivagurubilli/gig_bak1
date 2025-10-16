@@ -1,0 +1,73 @@
+Build a complete **MERN (MongoDB, Express, React, Node.js)** admin panel for **Gigglebuz Admin**, with full CRUD operations for all modules listed below.
+
+## 🧠 Functional Requirements:
+Implement the following admin features:
+
+1. **Dashboard**:
+   - Display total users, total revenue, active sessions (real-time if possible).
+   - Use charts (e.g., Chart.js or Recharts) for stats.
+
+2. **User Management**:
+   - List all users, search/filter users.
+   - Assign **G Icons** and **G Stars** (custom badges or ranks).
+   - Block/unblock users.
+
+3. **Wallet & Coin Management**:
+   - Manually credit/debit coins.
+   - View and filter wallet logs by user/date/amount.
+
+4. **Withdrawal Management**:
+   - View withdrawal requests from female users.
+   - Approve or reject with remarks.
+
+5. **Coin Package Management**:
+   - Add/Edit/Delete coin packages (name, price, coin count, offer details).
+
+6. **Leaderboard Management**:
+   - Display/edit top Gifters and Earners.
+   - Sort by weekly/monthly/yearly.
+
+7. **Gift Management**:
+   - Add/Edit/Delete gifts.
+   - Set coin values and images for each gift.
+
+8. **Notifications Management**:
+   - Send custom push/email notifications.
+   - Target: all users / only men / only women.
+
+9. **Content Moderation**:
+   - List reported users and their reports.
+   - Take actions like warning, suspension, or permanent block.
+
+10. **Payment Logs**:
+   - View all transactions.
+   - Filter by status: success/pending/failed.
+
+11. **Bonus Management**:
+   - Set rules for rewarding bonus coins (e.g., for online time or daily login).
+   - Activate/deactivate rules.
+
+12. **Document Management**:
+   - Upload/edit/delete NDA, Terms & Conditions, and Scope of Work documents (PDF or text).
+
+## 🧑‍🎨 UI/UX Requirements:
+- Use **latest React with Hooks and functional components**.
+- Implement **Tailwind CSS or Material UI (preferably Tailwind)**.
+- Use a **modern layout** with **sidebar navigation**, **responsive design**, and **dashboard cards**.
+- Use a **pinkish color palette** with **gradient backgrounds** (pink to purple preferred).
+- Animations/transitions where appropriate (e.g., modals, dropdowns).
+
+## 🔒 Authentication:
+- Add a simple **JWT-based login** for admin access.
+- Secure all admin routes with proper auth middleware.
+
+## 📦 Tech Stack:
+- **Frontend**: React.js (with Tailwind CSS or MUI), Axios
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB (Mongoose models)
+- **Authentication**: JWT-based auth
+- **Optional**: Socket.IO for real-time dashboard stats, Recharts/Chart.js for graphs
+
+## 🎯 Goal:
+Provide a full-featured admin panel that is production-ready, scalable, and visually appealing for the **Gigglebuz** team.
+

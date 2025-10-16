@@ -1,0 +1,189 @@
+app.post("/api/v1/app/payment/verify", authenticateMobileUser, async (req: Request, res: Response) => {
+    try {
+      const user = req.user!;
+      const { orderId } = req.body;
+
+      if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required" });
+      }
+
+      // Get order status from Cashfree REST API
+      console.log('Fetching order status from Cashfree...');
+      const orderResponse = await cashfreeAPI.fetchOrder(orderId);
+      
+      if (!orderResponse) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const paymentStatus = orderResponse.order_status;
+      
+      // If payment is successful, update wallet
+      if (paymentStatus === "PAID") {
+        // Find pending or completed transaction for this order
+        const allTransactions = await storage.getWalletTransactions();
+        let pendingTransaction = allTransactions.find(t => 
+          t.transactionId === orderId && t.status === "pending" && t.userId === user.id
+        );
+        
+        // Check if transaction was already completed (coins already credited)
+        const completedTransaction = allTransactions.find(t => 
+          t.transactionId === orderId && t.status === "completed" && t.userId === user.id
+        );
+
+        if (completedTransaction) {
+          // Transaction already processed, coins already credited - just return current wallet
+          const currentWallet = await storage.getWallet(user.id);
+          return res.json({
+            success: true,
+            status: paymentStatus,
+            message: "Payment already verified and coins already credited",
+            coinsAlreadyCredited: true,
+            wallet: {
+              coinBalance: currentWallet!.coinBalance,
+              totalEarned: currentWallet!.totalEarned,
+              totalSpent: currentWallet!.totalSpent
+            }
+          });
+        }
+
+        if (pendingTransaction) {
+          // Update transaction status
+          await storage.updateWalletTransaction(pendingTransaction.id, {
+            status: "completed"
+          });
+
+          // Get current wallet
+          const wallet = await storage.getWallet(user.id);
+          if (wallet) {
+            // Credit coins
+            const newBalance = wallet.coinBalance + pendingTransaction.amount;
+            console.log(`Crediting ${pendingTransaction.amount} coins to user ${user.id}. Current: ${wallet.coinBalance}, New: ${newBalance}`);
+            await storage.updateWalletBalance(user.id, newBalance);
+            
+            // Update Firebase
+            const updatedWallet = await storage.getWallet(user.id);
+            if (updatedWallet) {
+              await FirestoreService.updateUserWallet(user.id.toString(), {
+                userId: user.id,
+                coinBalance: updatedWallet.coinBalance,
+                totalEarned: updatedWallet.totalEarned,
+                totalSpent: updatedWallet.totalSpent
+              });
+
+              // Store completed transaction in Firebase
+              await FirestoreService.storeWalletTransaction({
+                userId: user.id.toString(),
+                amount: pendingTransaction.amount,
+                type: "credit",
+                description: pendingTransaction.description.replace("Pending: ", ""),
+                transactionId: orderId,
+                timestamp: new Date()
+              });
+            }
+            
+            console.log(`Payment verification successful: ${orderId}, ${pendingTransaction.amount} coins credited to user ${user.id}`);
+            
+            return res.json({
+              success: true,
+              status: paymentStatus,
+              message: "Payment verified and coins credited successfully",
+              coinsAdded: pendingTransaction.amount,
+              wallet: {
+                coinBalance: updatedWallet!.coinBalance,
+                totalEarned: updatedWallet!.totalEarned,
+                totalSpent: updatedWallet!.totalSpent
+              }
+            });
+          }
+        } else {
+          // No pending transaction found - payment might be completed via webhook
+          // Try to find the order amount from Cashfree response and credit manually
+          const orderAmount = orderResponse.order_amount;
+          if (orderAmount) {
+            // Create a completed transaction record
+            const coinAmount = Math.floor(orderAmount); // Assuming 1 INR = 1 coin or adjust as needed
+            
+            // Check if we can determine coin package from order metadata
+            let actualCoins = coinAmount;
+            try {
+              if (orderResponse.order_note || orderResponse.customer_details?.customer_name) {
+                // Try to extract coin amount from order details if available
+                const orderNote = orderResponse.order_note || '';
+                const coinMatch = orderNote.match(/(\d+)\s*coins?/i);
+                if (coinMatch) {
+                  actualCoins = parseInt(coinMatch[1]);
+                }
+              }
+            } catch (e) {
+              console.log('Could not parse coin amount from order details, using order amount:', coinAmount);
+            }
+
+            // Create transaction record
+            const newTransaction = await storage.createWalletTransaction({
+              userId: user.id,
+              amount: actualCoins,
+              type: "credit" as any,
+              description: `Coin package purchase - Order ${orderId}`,
+              transactionId: orderId,
+              status: "completed" as any
+            });
+
+            // Credit coins to wallet
+            const wallet = await storage.getWallet(user.id);
+            if (wallet) {
+              const newBalance = wallet.coinBalance + actualCoins;
+              console.log(`Crediting ${actualCoins} coins to user ${user.id} (no pending tx). Current: ${wallet.coinBalance}, New: ${newBalance}`);
+              await storage.updateWalletBalance(user.id, newBalance);
+              
+              // Update Firebase
+              const updatedWallet = await storage.getWallet(user.id);
+              if (updatedWallet) {
+                await FirestoreService.updateUserWallet(user.id.toString(), {
+                  userId: user.id,
+                  coinBalance: updatedWallet.coinBalance,
+                  totalEarned: updatedWallet.totalEarned,
+                  totalSpent: updatedWallet.totalSpent
+                });
+
+                await FirestoreService.storeWalletTransaction({
+                  userId: user.id.toString(),
+                  amount: actualCoins,
+                  type: "credit",
+                  description: `Coin package purchase - Order ${orderId}`,
+                  transactionId: orderId,
+                  timestamp: new Date()
+                });
+              }
+
+              console.log(`Payment verification (no pending tx): ${orderId}, ${actualCoins} coins credited to user ${user.id}`);
+
+              return res.json({
+                success: true,
+                status: paymentStatus,
+                message: "Payment verified and coins credited successfully",
+                coinsAdded: actualCoins,
+                wallet: {
+                  coinBalance: updatedWallet!.coinBalance,
+                  totalEarned: updatedWallet!.totalEarned,
+                  totalSpent: updatedWallet!.totalSpent
+                }
+              });
+            }
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        status: paymentStatus,
+        message: "Payment status retrieved"
+      });
+
+    } catch (error: any) {
+      console.error("Payment verification error:", error);
+      res.status(500).json({ 
+        error: "Failed to verify payment", 
+        details: error.message 
+      });
+    }
+  });

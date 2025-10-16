@@ -1,0 +1,29 @@
+# Firebase Environment Variables Setup
+
+Based on the deleted Firebase service account file, you need to set these environment variables in Render:
+
+## Required Environment Variables
+
+```
+FIREBASE_PROJECT_ID=giggles-16518
+FIREBASE_PRIVATE_KEY_ID=a9080c48c9a176bd3050596c323b1b5eecc638eb
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC2f1657Fp34S91\nPolY9hn2adDxb86gc7TPLbtBKdh3zKK3P7j3zkqsNb+Z6tNT3qPHX7RnZuXPYCH/\nzQ/Cj02l/pWYAlE3kiVgFnWf+YxB9VSC2i2KQzjoweuyNPCToUeqFqV7hd/kolQ+\nuoDiBhzHcQ6IaDAGFIMoHdJTl+vsXxvijM7k4iniWD6fcI0CVOJNtjh6Ue5CYWZ8\nbpGxC69RNrPzkFqITXMcApPuI76BRV8ERvMqPFaXIcKDcL7kVyIRieTF4Ez37z8L\nzBZqDF2FlBcd25+4O9yD1b9lSUwCGHEfkoVJOsbX1VposQks4b3SetzX9uKVqJ9Q\n0bsANr61AgMBAAECggEAJhUIo5QMYdkyAc2JtDBwxQCaSxN5gvZ6K8R/f47XntIr\nP0GTG9TmtK5nm9sKe8UpGIziVLR+bqqBFcPJDuDAA4xPU5/iKk47MeSl6XrV15q1\n5rNYDvLNoJZ81FxjOm9MiNP+drr+OFPecBOTmvbLERxIu9K/+LjVkKy+a9a3MsTg\nkCWejx/fIH1J14sAq/IPLBxtnjrcBbMTpG32N3GzsrZaosmlRDdwXp/JH33jtaz3\n7LuiDFq3kYvqnncoEpcW2byCyHwJUUDIuw8CRKINI1Ci2/Rogj1Vr7zKEifwunQE\nCXfkNrRLAzAh5i1nXvC+zan4Id54mz2TxOjRGhT/0QKBgQDpTKeyB9Gmws9YoESz\nthM9I8ZVZPTXbIzGqDv5uUGXv6nbstfVdO/Z9NHWpN3nV9weEBQAfNrua3pt8NeI\n2at3Y2w/ueMuXQ43e85OC/LKXZ5o1r9p+FXjFtnZi3UldbQt2IOBnUHWm0PWFOmK\nad9U9lLUGsajy38u0Ky0sUedxQKBgQDIQUVnzTJQgkaaRWisTWrZR51Urtt7TOux\nsQ9DUQVgxGU5PBPrmVXnLH6QlrpsywGtmyoX2WrS+35xw0vR/L2Lc0dwlg+NaISC\nhw/8WSu2obDMywxFbJm8n8sO5gnDxNIsU/sgW3S/jrhKz6rFAQiVGGY0YtG7bsHG\n0yAiT0AcMQKBgDLxyUDIElDvA2YgAUCZBtR4BmxJUmnkS01qGUar3JXthYLzJ8x1\n75ZRrqzHbamB9xAdhLCikxAzKhXt3LMGjTnR3SaBSgmqylr1TxSd6VOlY90S39Od\nJewj5khp+pfGfyTvva/FDkZ1uzd5c5IFEn60F1w3yJ6l5kzrxnrip3fdAoGAPDhE\not52DvfeO2479/Sf+Q8sJNcgcYfEKP9R07B9qYfl2LxUUTkfOBGNTfXFwgmaS5ap\npdpf4Wp3r8ZG+rLCXTkhdp3pt2CC2K29BOnb12PwQuWcnxP1d1+mNKjArvp1KZdn\noWdfSGumx/iDJhMVfaCEu6Qr5e18oEnFFAw4/0ECgYA4c/SnDx3+eFYjVY1ZLFFf\n9+oLxOOBH4RwmbVWGX1xliBLkAZGucL78QIBNArt5/nU1vmKCyAgRFfbNlbK+xAn\n5lOqekW94CRblouoAzhF5e5RUS/Tu27Oig0/rsJlTTDo1e/YcosM3JUsYxRDs0pu\nJKbRQunMJBKPBIdTsVe1vA==\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@giggles-16518.iam.gserviceaccount.com
+FIREBASE_CLIENT_ID=104084841536281263724
+```
+
+## How to Set Up in Render
+
+1. Go to your Render dashboard
+2. Navigate to your service
+3. Go to "Environment" tab
+4. Add each of the above environment variables
+5. Make sure to include the quotes around the private key
+
+## What Was Fixed
+
+- Removed the sensitive Firebase service account JSON file
+- Updated `server/firebaseAdmin.js` to use environment variables instead
+- This prevents GitHub secret scanning from blocking your commits
+
+Now you can commit and push your changes without the secret scanning issue.

@@ -1,0 +1,323 @@
+{
+    "success": true,
+    "data": [
+        {
+            "_id": "68b4a5d7d4d99f07fc5b4147",
+            "callId": "call_1756669399537_ifq1y39bk",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "6858e993009f812d3916054a",
+            "callType": "video",
+            "status": "ended",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:43:19.537Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": true,
+            "createdAt": "2025-08-31T19:43:19.538Z",
+            "updatedAt": "2025-08-31T19:44:05.238Z",
+            "__v": 0,
+            "endTime": "2025-08-31T19:44:05.238Z",
+            "role": "caller",
+            "otherUser": {
+                "id": "6858e993009f812d3916054a",
+                "name": "lakshmi",
+                "avatar": "/uploads/profiles/profile-1753699128550-603798139.jpg",
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a5aed4d99f07fc5b4140",
+            "callId": "call_1756669358720_gdpzlel0y",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "68552c1c4fe9aacd9c87230b",
+            "callType": "video",
+            "status": "initiated",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:42:38.720Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": false,
+            "createdAt": "2025-08-31T19:42:38.720Z",
+            "updatedAt": "2025-08-31T19:42:38.720Z",
+            "__v": 0,
+            "role": "caller",
+            "otherUser": {
+                "id": "68552c1c4fe9aacd9c87230b",
+                "name": "akanksha",
+                "avatar": null,
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a584d4d99f07fc5b4139",
+            "callId": "call_1756669316789_24k8ypyi0",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "6855211a4fe9aacd9c87225e",
+            "callType": "video",
+            "status": "initiated",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:41:56.789Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": false,
+            "createdAt": "2025-08-31T19:41:56.790Z",
+            "updatedAt": "2025-08-31T19:41:56.790Z",
+            "__v": 0,
+            "role": "caller",
+            "otherUser": {
+                "id": "6855211a4fe9aacd9c87225e",
+                "name": "udayasri",
+                "avatar": null,
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a55bd4d99f07fc5b4132",
+            "callId": "call_1756669275045_ky4f7zzcl",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "68552c1c4fe9aacd9c87230b",
+            "callType": "video",
+            "status": "initiated",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:41:15.045Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": false,
+            "createdAt": "2025-08-31T19:41:15.047Z",
+            "updatedAt": "2025-08-31T19:41:15.047Z",
+            "__v": 0,
+            "role": "caller",
+            "otherUser": {
+                "id": "68552c1c4fe9aacd9c87230b",
+                "name": "akanksha",
+                "avatar": null,
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a534d4d99f07fc5b412a",
+            "callId": "call_1756669236230_1zn2md2lx",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "6855046a4fe9aacd9c8721a3",
+            "callType": "video",
+            "status": "initiated",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:40:36.230Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": false,
+            "createdAt": "2025-08-31T19:40:36.236Z",
+            "updatedAt": "2025-08-31T19:40:36.236Z",
+            "__v": 0,
+            "role": "caller",
+            "otherUser": {
+                "id": "6855046a4fe9aacd9c8721a3",
+                "name": "ABBY",
+                "avatar": "/uploads/profiles/profile-1751527143152-879872763.jpg",
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a366d4d99f07fc5b411a",
+            "callId": "call_1756668774643_2jjdwoa67",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "68552c1c4fe9aacd9c87230b",
+            "callType": "video",
+            "status": "initiated",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:32:54.643Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": false,
+            "createdAt": "2025-08-31T19:32:54.644Z",
+            "updatedAt": "2025-08-31T19:32:54.644Z",
+            "__v": 0,
+            "role": "caller",
+            "otherUser": {
+                "id": "68552c1c4fe9aacd9c87230b",
+                "name": "akanksha",
+                "avatar": null,
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a33fd4d99f07fc5b4112",
+            "callId": "call_1756668735832_m5i3b095q",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "6855046a4fe9aacd9c8721a3",
+            "callType": "video",
+            "status": "initiated",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:32:15.832Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": false,
+            "createdAt": "2025-08-31T19:32:15.833Z",
+            "updatedAt": "2025-08-31T19:32:15.833Z",
+            "__v": 0,
+            "role": "caller",
+            "otherUser": {
+                "id": "6855046a4fe9aacd9c8721a3",
+                "name": "ABBY",
+                "avatar": "/uploads/profiles/profile-1751527143152-879872763.jpg",
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b4a2dfd4d99f07fc5b40f9",
+            "callId": "call_1756668639393_xn5404mwo",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "6855046a4fe9aacd9c8721a3",
+            "callType": "video",
+            "status": "ended",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:30:39.393Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": true,
+            "createdAt": "2025-08-31T19:30:39.398Z",
+            "updatedAt": "2025-08-31T19:31:19.525Z",
+            "__v": 0,
+            "endTime": "2025-08-31T19:31:19.524Z",
+            "role": "caller",
+            "otherUser": {
+                "id": "6855046a4fe9aacd9c8721a3",
+                "name": "ABBY",
+                "avatar": "/uploads/profiles/profile-1751527143152-879872763.jpg",
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        },
+        {
+            "_id": "68b49eee90ff7474b8e7a8ac",
+            "callId": "call_1756667630226_snzcih3ua",
+            "callerUserId": "685327ca6925771a57db68e4",
+            "receiverUserId": "6855046a4fe9aacd9c8721a3",
+            "callType": "video",
+            "status": "ended",
+            "coinsPerMinute": 30,
+            "adminCommissionPercent": 20,
+            "startTime": "2025-08-31T19:13:50.226Z",
+            "durationMinutes": 0,
+            "totalCoinsDeducted": 0,
+            "coinsToReceiver": 0,
+            "adminCommission": 0,
+            "paymentProcessed": true,
+            "createdAt": "2025-08-31T19:13:50.226Z",
+            "updatedAt": "2025-08-31T19:14:28.255Z",
+            "__v": 0,
+            "endTime": "2025-08-31T19:14:28.255Z",
+            "role": "caller",
+            "otherUser": {
+                "id": "6855046a4fe9aacd9c8721a3",
+                "name": "ABBY",
+                "avatar": "/uploads/profiles/profile-1751527143152-879872763.jpg",
+                "gender": "female"
+            },
+            "gifts": [],
+            "totalGiftsValue": 0,
+            "earnings": {
+                "callEarnings": 0,
+                "giftEarnings": 0,
+                "totalEarnings": 0
+            }
+        }
+    ],
+    "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 9,
+        "hasMore": false
+    },
+    "summary": {
+        "totalCalls": 9,
+        "totalMinutes": 0,
+        "totalSpent": 0,
+        "totalEarned": 0,
+        "totalGiftsValue": 0,
+        "callsByType": {
+            "video": 9,
+            "audio": 0,
+            "message": 0
+        }
+    }
+}

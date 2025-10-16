@@ -1,0 +1,32 @@
+node_modules
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+dist/
+
+# Sensitive files
+server/giggles-16518-a9080c48c9a1.json
+attached_assets/giggles-16518-a9080c48c9a1_*.json
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.test
+
+# Firebase service account keys
+server/*.json
+attached_assets/*.json
+**/giggles-*.json
+**/firebase-*.json
+
+# Server environment files
+server/.env
+server/.env.*
+
+# Replit and local files
+.config/
+.local/
+

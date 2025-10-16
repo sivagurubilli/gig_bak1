@@ -1,0 +1,34 @@
+Error updating coin package: CastError: Cast to ObjectId failed for value "NaN" (type string) at path "_id" for model "CoinPackage"
+    at SchemaObjectId.cast (/home/runner/workspace/node_modules/mongoose/lib/schema/objectId.js:251:11)
+    at SchemaType.applySetters (/home/runner/workspace/node_modules/mongoose/lib/schemaType.js:1255:12)
+    at SchemaType.castForQuery (/home/runner/workspace/node_modules/mongoose/lib/schemaType.js:1673:17)
+    at cast (/home/runner/workspace/node_modules/mongoose/lib/cast.js:390:32)
+    at Query.cast (/home/runner/workspace/node_modules/mongoose/lib/query.js:5055:12)
+    at Query._castConditions (/home/runner/workspace/node_modules/mongoose/lib/query.js:2351:10)
+    at model.Query._findOneAndUpdate (/home/runner/workspace/node_modules/mongoose/lib/query.js:3454:8)
+    at model.Query.exec (/home/runner/workspace/node_modules/mongoose/lib/query.js:4604:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MongoStorage.updateCoinPackage (/home/runner/workspace/server/mongoStorage.ts:587:25)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1005:30) {
+  stringValue: '"NaN"',
+  messageFormat: undefined,
+  kind: 'ObjectId',
+  value: 'NaN',
+  path: '_id',
+  reason: BSONError: input must be a 24 character hex string, 12 byte Uint8Array, or an integer
+      at new ObjectId (/home/runner/workspace/node_modules/bson/src/objectid.ts:120:15)
+      at castObjectId (/home/runner/workspace/node_modules/mongoose/lib/cast/objectid.js:25:12)
+      at SchemaObjectId.cast (/home/runner/workspace/node_modules/mongoose/lib/schema/objectId.js:249:12)
+      at SchemaType.applySetters (/home/runner/workspace/node_modules/mongoose/lib/schemaType.js:1255:12)
+      at SchemaType.castForQuery (/home/runner/workspace/node_modules/mongoose/lib/schemaType.js:1673:17)
+      at cast (/home/runner/workspace/node_modules/mongoose/lib/cast.js:390:32)
+      at Query.cast (/home/runner/workspace/node_modules/mongoose/lib/query.js:5055:12)
+      at Query._castConditions (/home/runner/workspace/node_modules/mongoose/lib/query.js:2351:10)
+      at model.Query._findOneAndUpdate (/home/runner/workspace/node_modules/mongoose/lib/query.js:3454:8)
+      at model.Query.exec (/home/runner/workspace/node_modules/mongoose/lib/query.js:4604:80)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async MongoStorage.updateCoinPackage (/home/runner/workspace/server/mongoStorage.ts:587:25)
+      at async <anonymous> (/home/runner/workspace/server/routes.ts:1005:30),
+  valueType: 'string'
+}
+9:45:43 AM [express] PATCH /api/coin-packages/NaN 500 in 297ms :: {"message":"Failed to update coin …

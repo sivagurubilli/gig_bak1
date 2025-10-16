@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "68b4a5d7d4d99f07fc5b4147",
+      "callId": "call_1756669399537_ifq1y39bk",
+      "callType": "video",
+      "status": "ended",
+      "role": "caller",
+      "otherUser": {
+        "id": "6858e993009f812d3916054a",
+        "name": "lakshmi",
+        "username": "+919876543210",
+        "avatar": "/uploads/profiles/profile-1753699128550-603798139.jpg",
+        "profilePicture": "http://localhost:5000/uploads/profiles/profile-1753699128550-603798139.jpg",
+        "gender": "female",
+        "profileType": "basic",
+        "isOnline": false,
+        "lastActive": "2025-08-31T19:45:00.000Z"
+      },
+      "duration": 0,
+      "totalCoinsDeducted": 0,
+      "earnings": {
+        "callEarnings": 0,
+        "giftEarnings": 0,
+        "totalEarnings": 0
+      }
+    }
+  ]
+}

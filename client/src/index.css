@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(328, 100%, 54%);
+  --muted: hsl(330, 100%, 97%);
+  --muted-foreground: hsl(325, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(328, 100%, 54%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(328, 100%, 54%);
+  --border: hsl(330, 20%, 90%);
+  --input: hsl(330, 20%, 90%);
+  --primary: hsl(328, 100%, 54%);
+  --primary-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(330, 100%, 97%);
+  --secondary-foreground: hsl(328, 100%, 15%);
+  --accent: hsl(330, 100%, 97%);
+  --accent-foreground: hsl(328, 100%, 15%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(328, 100%, 54%);
+  --radius: 0.5rem;
+  --gradient-pink: linear-gradient(135deg, hsl(328, 100%, 54%) 0%, hsl(292, 60%, 50%) 100%);
+  --gradient-purple: linear-gradient(135deg, hsl(292, 60%, 50%) 0%, hsl(260, 60%, 60%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(328, 100%, 54%, 0.1) 0%, hsl(292, 60%, 50%, 0.1) 100%);
+  --sidebar-background: hsl(0, 0%, 100%);
+  --sidebar-foreground: hsl(328, 100%, 54%);
+  --sidebar-primary: hsl(328, 100%, 54%);
+  --sidebar-primary-foreground: hsl(0, 0%, 98%);
+  --sidebar-accent: hsl(330, 100%, 97%);
+  --sidebar-accent-foreground: hsl(328, 100%, 15%);
+  --sidebar-border: hsl(330, 20%, 90%);
+  --sidebar-ring: hsl(328, 100%, 54%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(328, 100%, 54%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(328, 100%, 54%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(328, 100%, 54%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(328, 100%, 54%);
+  --primary-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(328, 100%, 54%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(328, 100%, 54%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --sidebar-background: hsl(240, 10%, 3.9%);
+  --sidebar-foreground: hsl(328, 100%, 54%);
+  --sidebar-primary: hsl(328, 100%, 54%);
+  --sidebar-primary-foreground: hsl(0, 0%, 98%);
+  --sidebar-accent: hsl(240, 3.7%, 15.9%);
+  --sidebar-accent-foreground: hsl(328, 100%, 54%);
+  --sidebar-border: hsl(240, 3.7%, 15.9%);
+  --sidebar-ring: hsl(240, 4.9%, 83.9%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    background: var(--gradient-pink);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-bg {
+    background: var(--gradient-pink);
+  }
+
+  .gradient-card-bg {
+    background: var(--gradient-card);
+  }
+
+  .sidebar-item {
+    @apply flex items-center px-4 py-3 text-gray-700 rounded-lg transition-all duration-200;
+  }
+
+  .sidebar-item:hover {
+    background: var(--gradient-card);
+  }
+
+  .sidebar-item.active {
+    background: var(--gradient-pink);
+    @apply text-white;
+  }
+
+  /* Custom scrollbar for sidebar */
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: hsl(330, 20%, 80%);
+    border-radius: 2px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(330, 20%, 70%);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    @apply transform -translate-y-1 shadow-xl;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

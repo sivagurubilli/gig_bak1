@@ -1,0 +1,183 @@
+// models/User.js
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
+const UserSchema = new mongoose.Schema({
+    password: {
+        type: String,
+        select: false
+    },
+    fullName: {
+        type: String,
+        required: [true, 'Please provide your full name'],
+        trim: true,
+        maxlength: [50, 'Name cannot be more than 50 characters']
+    },
+    email: {
+        type: String,
+        unique: true,
+        sparse: true,
+        lowercase: true
+    },
+    phoneNumber: {
+        type: String,
+        required: [true, 'Please provide a phone number for OTP login'],
+        unique: true,
+        match: [
+            /^(\+\d{1,3}[- ]?)?\d{10,14}$/,
+            'Please provide a valid phone number'
+        ]
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'other', 'prefer_not_to_say']
+    },
+    dateOfBirth: {
+        type: Date
+    },
+    location: {
+        type: String
+    },
+    coordinates: {
+        latitude: {
+            type: Number
+        },
+        longitude: {
+            type: Number
+        }
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
+    lastActive: {
+        type: Date,
+        default: Date.now
+    },
+    profileImage: {
+        type: String,
+        default: 'default-profile.jpg'
+    },
+    preferredLanguage: {
+        type: String,
+        default: 'English'
+    },
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    referredBy: {
+        type: String
+    },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    isProfileCompleted: {
+        type: Boolean,
+        default: false
+    },
+    otpSession: {
+        sessionId: String,
+        expiresAt: Date
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    followers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    following: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    followRequests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    blockedUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    visitors: [{
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        count: { type: Number, default: 1 },
+        lastVisited: { type: Date, default: Date.now }
+    }],
+    visited: [{
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        count: { type: Number, default: 1 },
+        lastVisited: { type: Date, default: Date.now }
+    }],
+    isAvailableForVideoCall: {
+        type: Boolean,
+        default: false
+    },
+    isAvailableForAudioCall: {
+        type: Boolean,
+        default: false
+    },
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    friendRequests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+});
+
+// Generate referral code before saving
+UserSchema.pre('save', async function (next) {
+    // Only generate referral code if it doesn't exist and name is provided
+    if (!this.referralCode && this.fullName) {
+        // Create a unique referral code based on name and random string
+        const namePart = this.fullName.split(' ')[0].substring(0, 4).toUpperCase();
+        const randomPart = Math.random().toString(36).substring(2, 7).toUpperCase();
+        this.referralCode = `${namePart}${randomPart}`;
+    }
+
+    next();
+});
+
+// Store OTP session details
+UserSchema.methods.setOTPSession = function (sessionId) {
+    this.otpSession = {
+        sessionId,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+    };
+};
+
+// Check if OTP session is valid
+UserSchema.methods.isOTPSessionValid = function () {
+    return this.otpSession &&
+        this.otpSession.sessionId &&
+        this.otpSession.expiresAt > Date.now();
+};
+
+// Clear OTP session
+UserSchema.methods.clearOTPSession = function () {
+    this.otpSession = undefined;
+};
+
+// Sign JWT and return
+UserSchema.methods.getSignedJwtToken = function () {
+    return jwt.sign(
+        {
+            id: this._id,
+            role: this.role
+        },
+        process.env.JWT_SECRET || 'secret123', // Fallback for testing
+        { expiresIn: process.env.JWT_EXPIRE || '30d' } // Fallback for testing
+    );
+};
+
+module.exports = mongoose.model('User', UserSchema);
