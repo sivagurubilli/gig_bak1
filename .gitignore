@@ -8,9 +8,9 @@
 .env.test
 
 # Firebase service account keys
-*.json
 giggles-*.json
 firebase-*.json
+*-service-account.json
 
 # Logs
 *.log
