@@ -13,7 +13,7 @@ export interface IMissedCall extends Document {
 }
 
 const MissedCallSchema = new Schema<IMissedCall>({
-  callId: { type: String, required: true },
+  callId: { type: String, required: true, unique: true },
   callerUserId: { type: String, required: true },
   receiverUserId: { type: String, required: true },
   callType: { type: String, enum: ['video', 'audio', 'message'], required: true },
@@ -29,8 +29,8 @@ const MissedCallSchema = new Schema<IMissedCall>({
 });
 
 // Indexes for efficient queries
-MissedCallSchema.index({ callId: 1 }, { unique: true });
 MissedCallSchema.index({ receiverUserId: 1, createdAt: -1 });
 MissedCallSchema.index({ callerUserId: 1, createdAt: -1 });
+MissedCallSchema.index({ callId: 1 });
 
 export const MissedCall = mongoose.model<IMissedCall>('MissedCall', MissedCallSchema);

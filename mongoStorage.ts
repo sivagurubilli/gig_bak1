@@ -34,7 +34,7 @@ import type {
   CoinPackage as CoinPackageType, InsertCoinPackage,
   Gift as GiftType, InsertGift,
   GiftTransaction as GiftTransactionType,
-  // Notification as NotificationType, InsertNotification, // Commented out - not in schema
+  Notification as NotificationType, InsertNotification,
   Report as ReportType,
   PaymentLog as PaymentLogType,
   BonusRule as BonusRuleType, InsertBonusRule,
@@ -46,10 +46,9 @@ import type {
 export class MongoStorage implements IStorage {
   constructor() {
     // Delay initialization to ensure database connection is established
-    // Use longer delay and check memory usage
     setTimeout(() => {
       this.initializeDefaultData();
-    }, 10000); // Increased delay for memory optimization
+    }, 2000);
   }
 
   private async initializeDefaultData() {
@@ -60,10 +59,8 @@ export class MongoStorage implements IStorage {
         return;
       }
 
-      console.log('Starting default data initialization...');
-
       // Create default admin if none exists
-      const adminCount = await Admin.countDocuments().maxTimeMS(10000);
+      const adminCount = await Admin.countDocuments().maxTimeMS(5000);
       if (adminCount === 0) {
         const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
@@ -74,12 +71,10 @@ export class MongoStorage implements IStorage {
           role: 'admin'
         });
         console.log('Default admin created successfully');
-      } else {
-        console.log('Default admin already exists');
       }
 
       // Create sample users if none exist
-      const userCount = await User.countDocuments().maxTimeMS(10000);
+      const userCount = await User.countDocuments().maxTimeMS(5000);
       if (userCount === 0) {
         const sampleUsers = [
           {
@@ -183,7 +178,6 @@ export class MongoStorage implements IStorage {
           ]);
         }
       }
-      console.log('Default data initialization completed successfully');
     } catch (error) {
       console.error('Error initializing default data:', error);
       // Don't throw the error, just log it to prevent app crash
@@ -430,7 +424,7 @@ export class MongoStorage implements IStorage {
     const formatted = this.toSchemaFormat(wallet);
     
     // Ensure proper field mapping
-    formatted.coinBalance = wallet.coinBalance || (wallet as any).balance || 0;
+    formatted.coinBalance = wallet.coinBalance || wallet.balance || 0;
     formatted.totalEarned = wallet.totalEarned || "0.00";
     formatted.totalSpent = wallet.totalSpent || "0.00";
     
@@ -450,7 +444,7 @@ export class MongoStorage implements IStorage {
     const formatted = this.toSchemaFormat(wallet);
     
     // Ensure proper field mapping
-    formatted.coinBalance = wallet.coinBalance || (wallet as any).balance || 0;
+    formatted.coinBalance = wallet.coinBalance || wallet.balance || 0;
     formatted.totalEarned = wallet.totalEarned || "0.00";
     formatted.totalSpent = wallet.totalSpent || "0.00";
     
@@ -481,9 +475,9 @@ export class MongoStorage implements IStorage {
       throw new Error(`Wallet not found for user ${userId}`);
     }
 
-    console.log(`MongoDB updateWalletBalance - Current wallet balance: ${wallet.coinBalance || (wallet as any).balance || 0}`);
+    console.log(`MongoDB updateWalletBalance - Current wallet balance: ${wallet.coinBalance || wallet.balance || 0}`);
     
-    const currentBalance = wallet.coinBalance || (wallet as any).balance || 0;
+    const currentBalance = wallet.coinBalance || wallet.balance || 0;
     const newBalance = Math.max(0, currentBalance + amount); // Add/subtract amount, ensure non-negative
     
     console.log(`MongoDB updateWalletBalance - Calculating: ${currentBalance} + ${amount} = ${newBalance}`);
@@ -654,18 +648,18 @@ export class MongoStorage implements IStorage {
     return transactions.map(tx => this.toSchemaFormat(tx));
   }
 
-  // Notification operations - commented out due to missing types
-  // async getNotifications(): Promise<NotificationType[]> {
-  //   const notifications = await Notification.find()
-  //     .populate('senderId', 'name')
-  //     .sort({ createdAt: -1 });
-  //   return notifications.map(notif => this.toSchemaFormat(notif));
-  // }
+  // Notification operations
+  async getNotifications(): Promise<NotificationType[]> {
+    const notifications = await Notification.find()
+      .populate('senderId', 'name')
+      .sort({ createdAt: -1 });
+    return notifications.map(notif => this.toSchemaFormat(notif));
+  }
 
-  // async createNotification(notification: InsertNotification): Promise<NotificationType> {
-  //   const newNotification = await Notification.create(notification);
-  //   return this.toSchemaFormat(newNotification);
-  // }
+  async createNotification(notification: InsertNotification): Promise<NotificationType> {
+    const newNotification = await Notification.create(notification);
+    return this.toSchemaFormat(newNotification);
+  }
 
   // Report operations
   async getReports(): Promise<ReportType[]> {
@@ -1215,7 +1209,7 @@ export class MongoStorage implements IStorage {
     const averageRating = ratings.reduce((sum, r) => sum + r.overallRating, 0) / totalRatings;
     
     // Rating distribution
-    const distribution: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     ratings.forEach(r => distribution[r.overallRating]++);
 
     // Average specific ratings
@@ -1330,26 +1324,7 @@ export class MongoStorage implements IStorage {
   }
 
   // User blocking and reporting methods
-  async blockUser(id: string | number): Promise<boolean> {
-    try {
-      const normalizedId = this.normalizeId(id);
-      if (!normalizedId) return false;
-      
-      const result = await User.findByIdAndUpdate(normalizedId, { 
-        isBlocked: true,
-        blockedAt: new Date(),
-        blockedBy: 'admin',
-        blockReason: 'Blocked by admin'
-      });
-      
-      return !!result;
-    } catch (error) {
-      console.error('Error in blockUser:', error);
-      return false;
-    }
-  }
-
-  async blockUserProfile(blockerId: string, blockedUserId: string, reason?: string): Promise<any> {
+  async blockUser(blockerId: string, blockedUserId: string, reason?: string): Promise<any> {
     try {
       // Prevent self-blocking
       if (blockerId === blockedUserId) {
@@ -1384,26 +1359,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async unblockUser(id: string | number): Promise<boolean> {
-    try {
-      const normalizedId = this.normalizeId(id);
-      if (!normalizedId) return false;
-      
-      const result = await User.findByIdAndUpdate(normalizedId, { 
-        isBlocked: false,
-        blockedAt: null,
-        blockedBy: null,
-        blockReason: null
-      });
-      
-      return !!result;
-    } catch (error) {
-      console.error('Error in unblockUser:', error);
-      return false;
-    }
-  }
-
-  async unblockUserProfile(blockerId: string, blockedUserId: string): Promise<void> {
+  async unblockUser(blockerId: string, blockedUserId: string): Promise<void> {
     try {
       await UserBlock.findOneAndUpdate(
         {
@@ -1416,7 +1372,7 @@ export class MongoStorage implements IStorage {
         }
       );
     } catch (error) {
-      console.error('Error in unblockUserProfile:', error);
+      console.error('Error in unblockUser:', error);
       throw error;
     }
   }
@@ -1797,7 +1753,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async getGiftTransactionsPaginated(userId: number, type: string = 'all', page: number = 1, limit: number = 20): Promise<{ transactions: any[], pagination: any }> {
+  async getGiftTransactions(userId: number, type: string = 'all', page: number = 1, limit: number = 20): Promise<{ transactions: any[], pagination: any }> {
     try {
       const skip = (page - 1) * limit;
       
@@ -1827,8 +1783,8 @@ export class MongoStorage implements IStorage {
       const transactionsWithUserInfo = await Promise.all(
         transactions.map(async (transaction) => {
           const [sender, receiver] = await Promise.all([
-            this.getUserById(transaction.senderId.toString()),
-            this.getUserById(transaction.receiverId.toString())
+            this.getUserById(transaction.senderId),
+            this.getUserById(transaction.receiverId)
           ]);
 
           return {
@@ -1846,7 +1802,7 @@ export class MongoStorage implements IStorage {
               avatar: receiver?.avatar
             },
             gift: transaction.giftId,
-            type: transaction.senderId.toString() === userId.toString() ? 'sent' : 'received'
+            type: transaction.senderId === userId ? 'sent' : 'received'
           };
         })
       );
@@ -1866,7 +1822,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async getWalletByUserIdNumber(userId: number): Promise<any> {
+  async getWalletByUserId(userId: number): Promise<any> {
     try {
       const wallet = await Wallet.findOne({ userId });
       return wallet;
@@ -2064,7 +2020,7 @@ export class MongoStorage implements IStorage {
 
   // User Blocking Management Methods
   
-  async blockUserByAdmin(adminUserId: string, userId: string, reason?: string): Promise<void> {
+  async blockUser(adminUserId: string, userId: string, reason?: string): Promise<void> {
     await User.findByIdAndUpdate(userId, { 
       isBlocked: true,
       blockedAt: new Date(),
@@ -2073,7 +2029,7 @@ export class MongoStorage implements IStorage {
     });
   }
 
-  async unblockUserByAdmin(userId: string): Promise<void> {
+  async unblockUser(userId: string): Promise<void> {
     await User.findByIdAndUpdate(userId, { 
       isBlocked: false,
       blockedAt: null,
@@ -2082,7 +2038,7 @@ export class MongoStorage implements IStorage {
     });
   }
 
-  async getBlockedUsersByAdmin(page: number = 1, limit: number = 20): Promise<{ users: any[], total: number }> {
+  async getBlockedUsers(page: number = 1, limit: number = 20): Promise<{ users: any[], total: number }> {
     const skip = (page - 1) * limit;
     
     const [users, total] = await Promise.all([
@@ -2097,9 +2053,30 @@ export class MongoStorage implements IStorage {
   }
 
   // User Profile Blocking Methods (user-to-user blocking)
+  
+  async blockUserProfile(blockerId: string, blockedUserId: string, reason?: string): Promise<void> {
+    await UserBlock.findOneAndUpdate(
+      { blockerId, blockedUserId },
+      { 
+        blockerId, 
+        blockedUserId, 
+        reason,
+        isActive: true,
+        blockedAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+  }
 
+  async unblockUserProfile(blockerId: string, blockedUserId: string): Promise<void> {
+    await UserBlock.findOneAndUpdate(
+      { blockerId, blockedUserId },
+      { isActive: false },
+      { new: true }
+    );
+  }
 
-  async isUserBlockedByAdmin(blockerId: string, blockedUserId: string): Promise<boolean> {
+  async isUserBlocked(blockerId: string, blockedUserId: string): Promise<boolean> {
     const block = await UserBlock.findOne({
       blockerId,
       blockedUserId,
@@ -2257,15 +2234,15 @@ export class MongoStorage implements IStorage {
       const total = await Follow.countDocuments({ following: new mongoose.Types.ObjectId(userId) });
 
       const followers = follows.map(follow => ({
-        id: (follow.follower as any)._id,
-        username: (follow.follower as any).username,
-        name: (follow.follower as any).name,
-        avatar: (follow.follower as any).avatar,
-        gender: (follow.follower as any).gender,
-        profileType: (follow.follower as any).profileType,
-        badgeLevel: (follow.follower as any).badgeLevel,
-        isOnline: (follow.follower as any).isOnline,
-        lastActive: (follow.follower as any).lastActive,
+        id: follow.follower._id,
+        username: follow.follower.username,
+        name: follow.follower.name,
+        avatar: follow.follower.avatar,
+        gender: follow.follower.gender,
+        profileType: follow.follower.profileType,
+        badgeLevel: follow.follower.badgeLevel,
+        isOnline: follow.follower.isOnline,
+        lastActive: follow.follower.lastActive,
         followedAt: follow.createdAt
       }));
 
@@ -2303,15 +2280,15 @@ export class MongoStorage implements IStorage {
       const total = await Follow.countDocuments({ follower: new mongoose.Types.ObjectId(userId) });
 
       const following = follows.map(follow => ({
-        id: (follow.following as any)._id,
-        username: (follow.following as any).username,
-        name: (follow.following as any).name,
-        avatar: (follow.following as any).avatar,
-        gender: (follow.following as any).gender,
-        profileType: (follow.following as any).profileType,
-        badgeLevel: (follow.following as any).badgeLevel,
-        isOnline: (follow.following as any).isOnline,
-        lastActive: (follow.following as any).lastActive,
+        id: follow.following._id,
+        username: follow.following.username,
+        name: follow.following.name,
+        avatar: follow.following.avatar,
+        gender: follow.following.gender,
+        profileType: follow.following.profileType,
+        badgeLevel: follow.following.badgeLevel,
+        isOnline: follow.following.isOnline,
+        lastActive: follow.following.lastActive,
         followedAt: follow.createdAt
       }));
 

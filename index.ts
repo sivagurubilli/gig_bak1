@@ -1,5 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerMobileRoutes } from "./mobileRoutes";
@@ -66,12 +64,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  console.log('🚀 Starting server...');
-  
   // Connect to MongoDB
-  console.log('📡 Connecting to MongoDB...');
   await connectDatabase();
-  console.log('✅ MongoDB connected');
   
   // Setup Swagger API documentation
   setupSwagger(app);
@@ -95,11 +89,8 @@ app.use((req, res, next) => {
     });
   });
 
-  console.log('🛣️ Registering routes...');
   const server = await registerRoutes(app);
-  console.log('📱 Registering mobile routes...');
   await registerMobileRoutes(app);
-  console.log('✅ Routes registered');
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -120,13 +111,14 @@ app.use((req, res, next) => {
 
   // Use Render's PORT environment variable or default to 5000
   const port = process.env.PORT || 5000;
-  
-  // Start the server
-  console.log(`🌐 Starting server on port ${port}...`);
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`✅ Server running on port ${port}`);
-    console.log(`Environment: ${app.get("env")}`);
-    console.log(`MongoDB URI: ${process.env.MONGODB_URI ? "Connected" : "Not configured"}`);
+  server.listen({
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  }, () => {
+    log(`serving on port ${port}`);
+    log(`Environment: ${app.get("env")}`);
+    log(`MongoDB URI: ${process.env.MONGODB_URI ? "Connected" : "Not configured"}`);
   });
 
   // Graceful shutdown handling
