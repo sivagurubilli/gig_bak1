@@ -8,7 +8,6 @@ export async function connectDatabase() {
     const options = {
       serverSelectionTimeoutMS: 30000, // 30 seconds
       socketTimeoutMS: 45000, // 45 seconds
-      bufferMaxEntries: 0,
       bufferCommands: false,
       maxPoolSize: 10,
       minPoolSize: 5,
