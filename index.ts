@@ -97,7 +97,7 @@ async function startServer() {
     const port = process.env.PORT || 5000;
     
     console.log(`🌐 Starting server on port ${port}...`);
-    app.listen(port, "0.0.0.0", () => {
+    app.listen(Number(port), "0.0.0.0", () => {
       console.log(`✅ Server running on port ${port}`);
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`MongoDB URI: ${process.env.MONGODB_URI ? "Connected" : "Not configured"}`);

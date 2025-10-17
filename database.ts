@@ -6,7 +6,7 @@ export async function connectDatabase() {
   try {
     // Configure mongoose connection options
     const options = {
-      serverSelectionTimeoutMS: 30000, // 30 seconds
+      serverSelectionTimeoutMS: 5000, // 5 seconds for faster timeout
       socketTimeoutMS: 45000, // 45 seconds
       bufferCommands: false,
       maxPoolSize: 10,
@@ -16,24 +16,26 @@ export async function connectDatabase() {
     };
 
     await mongoose.connect(MONGODB_URI, options);
-    console.log('Connected to MongoDB successfully');
+    console.log('✅ Connected to MongoDB successfully');
     
     // Handle connection events
     mongoose.connection.on('error', (error) => {
-      console.error('MongoDB connection error:', error);
+      console.error('❌ MongoDB connection error:', error);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
+      console.log('⚠️ MongoDB disconnected');
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
+      console.log('✅ MongoDB reconnected');
     });
 
   } catch (error) {  
-    console.error('MongoDB connection error:', error);
-    process.exit(1);   
+    console.error('❌ MongoDB connection failed:', error.message);
+    console.log('⚠️ Server will continue without MongoDB connection');
+    console.log('💡 To fix: Start MongoDB locally or set MONGODB_URI environment variable');
+    // Don't exit the process, let the server run without MongoDB
   }
 }
 
