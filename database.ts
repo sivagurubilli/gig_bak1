@@ -1,38 +1,28 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/giggleadmin';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gurubilli:VrOY63wHF4q0F3Z1@cluster0.dlpod.mongodb.net/giggles';
 
 export async function connectDatabase() {
   try {
+    console.log('🔄 Starting MongoDB connection...');
+    console.log(`📡 MONGODB_URI: ${process.env.MONGODB_URI ? 'Set' : 'Not set'}`);
+    console.log(`📡 Using URI: ${MONGODB_URI.replace(/\/\/.*@/, '//***:***@')}`); // Hide credentials in logs
+    
     // Configure mongoose connection options
     const options = {
-      serverSelectionTimeoutMS: 15000, // 15 seconds for better reliability
+      serverSelectionTimeoutMS: 10000, // 10 seconds for better reliability
       socketTimeoutMS: 45000, // 45 seconds
       bufferCommands: true, // Enable command buffering for production stability
       maxPoolSize: 10,
       minPoolSize: 5,
       maxIdleTimeMS: 30000,
-      retryWrites: true,
-      bufferMaxEntries: 0, // Disable mongoose buffering
-      useNewUrlParser: true,
-      useUnifiedTopology: true
+      retryWrites: true
     };
 
-    console.log('🔄 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI, options);
-    
-    // Wait for connection to be fully established
-    await new Promise((resolve, reject) => {
-      if (mongoose.connection.readyState === 1) {
-        resolve(true);
-      } else {
-        mongoose.connection.once('connected', resolve);
-        mongoose.connection.once('error', reject);
-      }
-    });
-    
     console.log('✅ Connected to MongoDB successfully');
-    console.log(`📊 MongoDB ready state: ${mongoose.connection.readyState}`);
+    console.log(`📊 Connection state: ${mongoose.connection.readyState}`);
+    console.log(`📊 Database name: ${mongoose.connection.db?.databaseName}`);
     
     // Handle connection events
     mongoose.connection.on('error', (error) => {

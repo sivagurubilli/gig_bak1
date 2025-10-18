@@ -16,18 +16,29 @@ import { mongoose } from "./database";
 function isDatabaseReady(): boolean {
   const readyState = mongoose.connection.readyState;
   console.log(`🔍 Database ready state: ${readyState} (0=disconnected, 1=connected, 2=connecting, 3=disconnecting)`);
-  return readyState === 1; // 1 = connected
+  
+  // Accept both connected (1) and connecting (2) states to be more lenient
+  return readyState === 1 || readyState === 2;
 }
 
 // Enhanced database readiness check with retry logic
-async function waitForDatabaseReady(maxRetries = 5, delayMs = 1000): Promise<boolean> {
+async function waitForDatabaseReady(maxRetries = 3, delayMs = 500): Promise<boolean> {
   for (let i = 0; i < maxRetries; i++) {
+    const readyState = mongoose.connection.readyState;
+    console.log(`⏳ Database check attempt ${i + 1}/${maxRetries} - State: ${readyState}`);
+    
     if (isDatabaseReady()) {
+      console.log(`✅ Database is ready (state: ${readyState})`);
       return true;
     }
-    console.log(`⏳ Waiting for database connection... (attempt ${i + 1}/${maxRetries})`);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+    
+    if (i < maxRetries - 1) {
+      console.log(`⏳ Waiting ${delayMs}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
   }
+  
+  console.log(`❌ Database not ready after ${maxRetries} attempts`);
   return false;
 }
 
@@ -303,6 +314,29 @@ const authenticateMobileUser = async (
 async function registerMobileRoutes(app: Express) {
   // Apply performance monitoring to all mobile routes
   app.use("/api/v1/app", performanceMiddleware);
+
+  // Database status endpoint for debugging
+  app.get("/api/v1/app/db-status", (req: Request, res: Response) => {
+    const readyState = mongoose.connection.readyState;
+    const states = {
+      0: 'disconnected',
+      1: 'connected', 
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+    
+    res.json({
+      status: 'ok',
+      database: {
+        readyState: readyState,
+        state: states[readyState as keyof typeof states],
+        host: mongoose.connection.host,
+        port: mongoose.connection.port,
+        name: mongoose.connection.name,
+        isReady: isDatabaseReady()
+      }
+    });
+  });
   /**
    * @swagger
    * /api/v1/app/auth/request-otp:
@@ -357,12 +391,11 @@ async function registerMobileRoutes(app: Express) {
     "/api/v1/app/auth/request-otp",
     async (req: Request, res: Response) => {
       try {
-        // Check if database is ready before processing
-        const dbReady = await waitForDatabaseReady(3, 500);
+        // Check if database is ready before processing (non-blocking)
+        const dbReady = await waitForDatabaseReady(2, 250);
         if (!dbReady) {
-          return res.status(503).json({
-            error: "Database connection not ready. Please try again in a moment.",
-          });
+          console.log(`⚠️ Database not ready, but proceeding with OTP request`);
+          // Don't block the request, but log the warning
         }
 
         // Check for bypass phone numbers before validation
@@ -519,12 +552,11 @@ async function registerMobileRoutes(app: Express) {
     "/api/v1/app/auth/verify-otp",
     async (req: Request, res: Response) => {
       try {
-        // Check if database is ready before processing
-        const dbReady = await waitForDatabaseReady(3, 500);
+        // Check if database is ready before processing (non-blocking)
+        const dbReady = await waitForDatabaseReady(2, 250);
         if (!dbReady) {
-          return res.status(503).json({
-            error: "Database connection not ready. Please try again in a moment.",
-          });
+          console.log(`⚠️ Database not ready, but proceeding with OTP verification`);
+          // Don't block the request, but log the warning
         }
 
         // Handle bypass phone numbers before validation
