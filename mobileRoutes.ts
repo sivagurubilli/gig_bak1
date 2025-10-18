@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import multer from "multer";
@@ -251,7 +251,7 @@ async function getApprovedAvatar(
 const authenticateMobileUser = async (
   req: Request,
   res: Response,
-  next: Function,
+  next: NextFunction,
 ) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
