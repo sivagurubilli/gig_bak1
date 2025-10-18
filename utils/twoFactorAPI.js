@@ -6,7 +6,7 @@ import axios from "axios";
  */
 class TwoFactorAPI {
     constructor() {
-        this.apiKey = "613e3a34-8571-11f0-a562-0200cd936042";
+        this.apiKey = process.env.TWO_FACTOR_API_KEY || "613e3a34-8571-11f0-a562-0200cd936042";
         this.baseURL = "https://2factor.in/API/V1";
     }
 
