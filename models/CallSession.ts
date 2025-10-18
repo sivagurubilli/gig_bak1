@@ -73,6 +73,27 @@ const CallSessionSchema = new mongoose.Schema({
   lastUpdated: {
     type: Date,
     default: Date.now
+  },
+  // Additional fields for enhanced call tracking
+  connectedAt: {
+    type: Date
+  },
+  duration: {
+    type: Number,
+    default: 0
+  },
+  coinsDeducted: {
+    type: Number,
+    default: 0
+  },
+  endReason: {
+    type: String,
+    enum: ['completed', 'timeout', 'user_disconnected', 'insufficient_coins', 'admin_ended'],
+    default: 'completed'
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   }
 }, {
   timestamps: true

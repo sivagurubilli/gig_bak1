@@ -1,11 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ILeaderboardEntry extends Document {
+  id: number;
   userId: mongoose.Types.ObjectId;
   type: string;
   period: string;
   value: number;
+  score: number; // Alias for value
   rank: number;
+  periodStart: Date;
+  periodEnd: Date;
   updatedAt: Date;
 }
 
@@ -38,6 +42,30 @@ const leaderboardEntrySchema = new Schema<ILeaderboardEntry>({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  periodStart: {
+    type: Date,
+    default: Date.now
+  },
+  periodEnd: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Add virtual for score (alias for value)
+leaderboardEntrySchema.virtual('score').get(function() {
+  return this.value;
+});
+
+// Ensure virtual fields are serialized
+leaderboardEntrySchema.set('toJSON', {
+  virtuals: true,
+  transform: function(doc: any, ret: any) {
+    ret.id = ret._id?.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
   }
 });
 

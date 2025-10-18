@@ -485,6 +485,86 @@ export class FirestoreService {
       console.error('Error updating user rating in Firebase:', error);
     }
   }
+
+  // Store message in Firestore for real-time messaging
+  static async storeMessage(messageData: any) {
+    if (!firestore) {
+      console.log('Firebase not configured - skipping message storage');
+      return null;
+    }
+
+    try {
+      const messageRef = firestore.collection('messages').doc();
+      
+      const message = {
+        id: messageData.id,
+        senderId: messageData.senderId,
+        receiverId: messageData.receiverId,
+        content: messageData.content,
+        type: messageData.type || 'text',
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        syncedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      await messageRef.set(message);
+      console.log(`Message stored in Firestore: ${messageData.id}`);
+      
+      return messageRef.id;
+    } catch (error) {
+      console.error('Error storing message in Firestore:', error);
+      return null;
+    }
+  }
+
+  // Send message notification
+  static async sendMessageNotification(userId: string, messageData: any) {
+    if (!firestore || !auth) {
+      console.log('Firebase not configured - skipping message notification');
+      return false;
+    }
+
+    try {
+      const userRef = firestore.collection('users').doc(userId);
+      const userDoc = await userRef.get();
+      
+      if (!userDoc.exists) {
+        console.log(`User ${userId} not found in Firestore`);
+        return false;
+      }
+
+      const userData = userDoc.data();
+      
+      if (!userData?.fcmToken) {
+        console.log(`No FCM token for user ${userId}`);
+        return false;
+      }
+
+      const message = {
+        token: userData.fcmToken,
+        notification: {
+          title: 'New Message',
+          body: messageData.content || 'You have a new message'
+        },
+        data: {
+          type: 'message',
+          senderId: messageData.senderId,
+          messageId: messageData.id
+        }
+      };
+
+      await auth.send(message);
+      console.log(`Message notification sent to user ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('Error sending message notification:', error);
+      return false;
+    }
+  }
+
+  // Sync user data to Firestore
+  static async syncUserData(userId: string, userData: any) {
+    return await this.syncUserProfile(userId, userData);
+  }
 }
 
 // Export individual functions for easier importing

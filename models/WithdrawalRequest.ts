@@ -1,9 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IWithdrawalRequest extends Document {
+  id: number;
   userId: mongoose.Types.ObjectId;
   coinAmount: number; // Original coin amount requested
   rupeeAmount: string; // Converted rupee amount (coinAmount / 10)
+  amount: number; // Alias for coinAmount
   status: string;
   accountType: string | null; // 'bank' | 'upi' | 'paytm'
   accountDetails: string | null; // JSON string of account details
@@ -58,6 +60,22 @@ const withdrawalRequestSchema = new Schema<IWithdrawalRequest>({
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+// Add virtual for amount (alias for coinAmount)
+withdrawalRequestSchema.virtual('amount').get(function() {
+  return this.coinAmount;
+});
+
+// Ensure virtual fields are serialized
+withdrawalRequestSchema.set('toJSON', {
+  virtuals: true,
+  transform: function(doc: any, ret: any) {
+    ret.id = ret._id?.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
   }
 });
 

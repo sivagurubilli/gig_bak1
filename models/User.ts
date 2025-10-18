@@ -1,9 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
+  id: string; // MongoDB _id converted to id
   username: string;
   name: string;
   email: string;
+  phoneNumber: string; // Phone number for OTP authentication
   gender: string;
   avatar: string | null;
   isBlocked: boolean;
@@ -37,6 +39,13 @@ const userSchema = new Schema<IUser>({
     required: true,
     unique: true,
     lowercase: true
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
+    unique: true,
+    sparse: true, // Allow null values but enforce uniqueness for non-null values
+    trim: true
   },
   gender: {
     type: String,
@@ -93,6 +102,16 @@ const userSchema = new Schema<IUser>({
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+// Add transform to convert _id to id
+userSchema.set('toJSON', {
+  transform: function(doc: any, ret: any) {
+    ret.id = ret._id?.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
   }
 });
 

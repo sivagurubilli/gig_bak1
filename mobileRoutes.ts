@@ -8,9 +8,13 @@ import { z } from "zod";
 import { MongoStorage } from "./mongoStorage";
 
 const storage = new MongoStorage();
-import { insertUserSchema, User } from "../shared/schema";
+import { insertUserSchema } from "../shared/schema";
+import { User, IUser } from "./models/User";
 import { FirestoreService } from "./firebase";
 import { mongoose } from "./database";
+
+// Type alias to use MongoDB User type consistently
+type UserType = IUser;
 
 // Helper function to check if database is ready
 function isDatabaseReady(): boolean {
@@ -630,8 +634,8 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Check if user already exists
-        const existingUsers = await storage.getUsers();
-        let user = existingUsers.find((u) => u.username === phoneNumber);
+        const existingUsers = await User.find({ phoneNumber: phoneNumber });
+        let user = existingUsers.length > 0 ? existingUsers[0] : null;
 
         if (user) {
           // Check if user is blocked
@@ -710,10 +714,11 @@ async function registerMobileRoutes(app: Express) {
           let wallet;
 
           try {
-            newUser = await storage.createUser({
+            newUser = await User.create({
               username: phoneNumber,
               name: `User_${phoneNumber.slice(-4)}`, // Default name using last 4 digits
               email: `${phoneNumber.replace("+", "")}@gigglebuz.com`, // Default email
+              phoneNumber: phoneNumber, // Add phone number field
               gender: "male", // Default gender
               profileType: "basic",
               badgeLevel: 1,
