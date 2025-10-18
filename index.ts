@@ -24,8 +24,8 @@ app.use((req, res, next) => {
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === "production" 
-    ? ["https://your-client-domain.com"]
-    : ["http://localhost:3000", "http://localhost:5173"],
+    ? ["https://gig-bak1.onrender.com", "https://your-client-domain.com"]
+    : ["http://localhost:3000", "http://localhost:5173", "https://gig-bak1.onrender.com"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
