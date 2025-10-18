@@ -10,6 +10,26 @@ import { MongoStorage } from "./mongoStorage";
 const storage = new MongoStorage();
 import { insertUserSchema, User } from "../shared/schema";
 import { FirestoreService } from "./firebase";
+import { mongoose } from "./database";
+
+// Helper function to check if database is ready
+function isDatabaseReady(): boolean {
+  const readyState = mongoose.connection.readyState;
+  console.log(`🔍 Database ready state: ${readyState} (0=disconnected, 1=connected, 2=connecting, 3=disconnecting)`);
+  return readyState === 1; // 1 = connected
+}
+
+// Enhanced database readiness check with retry logic
+async function waitForDatabaseReady(maxRetries = 5, delayMs = 1000): Promise<boolean> {
+  for (let i = 0; i < maxRetries; i++) {
+    if (isDatabaseReady()) {
+      return true;
+    }
+    console.log(`⏳ Waiting for database connection... (attempt ${i + 1}/${maxRetries})`);
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  return false;
+}
 
 import twoFactorAPI from "./utils/twoFactorAPI.js";
 import { notificationService } from "./utils/notificationService";
@@ -337,6 +357,14 @@ async function registerMobileRoutes(app: Express) {
     "/api/v1/app/auth/request-otp",
     async (req: Request, res: Response) => {
       try {
+        // Check if database is ready before processing
+        const dbReady = await waitForDatabaseReady(3, 500);
+        if (!dbReady) {
+          return res.status(503).json({
+            error: "Database connection not ready. Please try again in a moment.",
+          });
+        }
+
         // Check for bypass phone numbers before validation
         let { phoneNumber } = req.body;
 
@@ -491,6 +519,14 @@ async function registerMobileRoutes(app: Express) {
     "/api/v1/app/auth/verify-otp",
     async (req: Request, res: Response) => {
       try {
+        // Check if database is ready before processing
+        const dbReady = await waitForDatabaseReady(3, 500);
+        if (!dbReady) {
+          return res.status(503).json({
+            error: "Database connection not ready. Please try again in a moment.",
+          });
+        }
+
         // Handle bypass phone numbers before validation
         let { phoneNumber, otp, sessionId, deviceToken } = req.body;
 
