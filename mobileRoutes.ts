@@ -286,7 +286,7 @@ const authenticateMobileUser = async (
       "Mobile auth - User found:",
       user ? "Yes" : "No",
       user
-        ? { id: user.id, username: user.username, isBlocked: user.isBlocked }
+        ? { id: (user as any)._id, username: (user as any).username, isBlocked: (user as any).isBlocked }
         : "null",
     );
 
@@ -297,7 +297,7 @@ const authenticateMobileUser = async (
       });
     }
 
-    if (user.isBlocked) {
+    if ((user as any).isBlocked) {
       return res.status(403).json({
         error:
           "Your account has been blocked. Please contact support for assistance.",
@@ -639,7 +639,7 @@ async function registerMobileRoutes(app: Express) {
 
         if (user) {
           // Check if user is blocked
-          if (user.isBlocked) {
+          if ((user as any).isBlocked) {
             // Clean up session
             if (sessionKey) otpSessions.delete(sessionKey);
 
@@ -655,7 +655,7 @@ async function registerMobileRoutes(app: Express) {
 
           // Generate JWT token
           const token = jwt.sign(
-            { userId: user.id, phoneNumber },
+            { userId: (user as any)._id, phoneNumber },
             process.env.JWT_SECRET || "77ab346ffe91751557cbebdabe5f70232158444821b383d6e256a475d4b0ecd70a14e49b561e645474eace8720db55db0f78bcd316cf55bea9708df9d0cb7326",
             { expiresIn: "30d" },
           );
@@ -669,16 +669,16 @@ async function registerMobileRoutes(app: Express) {
           // Update device token if provided
           if (deviceToken) {
             updateData.fcmToken = deviceToken;
-            console.log(`Updated FCM token for existing user ${user.id}`);
+            console.log(`Updated FCM token for existing user ${(user as any)._id}`);
           }
           
-          await storage.updateUser(user.id, updateData);
+          await storage.updateUser((user as any)._id, updateData);
 
           // Get existing wallet
-          let wallet = await storage.getWallet(user.id);
+          let wallet = await storage.getWallet((user as any)._id);
           if (!wallet) {
             // Create wallet if it doesn't exist
-            wallet = await storage.createWallet(user.id);
+            wallet = await storage.createWallet((user as any)._id);
           }
 
           res.json({
@@ -686,20 +686,20 @@ async function registerMobileRoutes(app: Express) {
             message: "Login successful. Welcome back!",
             token,
             user: {
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              email: user.email,
-              avatar: await getApprovedAvatar(user.id),
-              gender: user.gender,
-              profileType: user.profileType,
-              badgeLevel: user.badgeLevel,
-              language: user.language,
-              dob: user.dob,
-              interests: user.interests,
-              aboutMe: user.aboutMe,
-              isOnline: user.isOnline,
-              lastActive: user.lastActive,
+              id: (user as any)._id,
+              username: (user as any).username,
+              name: (user as any).name,
+              email: (user as any).email,
+              avatar: await getApprovedAvatar((user as any)._id),
+              gender: (user as any).gender,
+              profileType: (user as any).profileType,
+              badgeLevel: (user as any).badgeLevel,
+              language: (user as any).language,
+              dob: (user as any).dob,
+              interests: (user as any).interests,
+              aboutMe: (user as any).aboutMe,
+              isOnline: (user as any).isOnline,
+              lastActive: (user as any).lastActive,
               wallet: {
                 coinBalance: wallet.coinBalance,
                 totalEarned: wallet.totalEarned,
@@ -956,13 +956,13 @@ async function registerMobileRoutes(app: Express) {
         if (profileData.avatar) {
           // Create a profile picture request for admin approval
           await storage.createProfilePictureRequest({
-            userId: user.id,
+            userId: (user as any)._id,
             imageUrl: profileData.avatar,
             userDetails: {
-              name: profileData.name || user.username,
-              username: user.username,
-              email: profileData.email || user.email,
-              gender: profileData.gender || user.gender,
+              name: profileData.name || (user as any).username,
+              username: (user as any).username,
+              email: profileData.email || (user as any).email,
+              gender: profileData.gender || (user as any).gender,
             },
           });
         }
@@ -970,11 +970,11 @@ async function registerMobileRoutes(app: Express) {
         // Update user profile (excluding avatar which goes through approval)
         // Set profile type to 'gicon' for female users if not already set to a specific type
         const profileType =
-          profileData.gender === "female" && user.profileType === "basic"
+          profileData.gender === "female" && (user as any).profileType === "basic"
             ? "gicon"
-            : user.profileType;
+            : (user as any).profileType;
 
-        const updatedUser = await storage.updateUser(user.id, {
+        const updatedUser = await storage.updateUser((user as any)._id, {
           name: profileData.name,
           email: profileData.email,
           gender: profileData.gender,
@@ -991,21 +991,26 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Get user's wallet
-        let wallet = await storage.getWallet(user.id);
+        let wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
-          wallet = await storage.createWallet(user.id);
+          wallet = await storage.createWallet((user as any)._id);
         }
 
         // Sync updated profile to Firebase Firestore
-        await FirestoreService.syncUserProfile(user.id.toString(), updatedUser);
+        const userId = (user as any)._id?.toString();
+        console.log('🔄 Syncing user profile to Firebase...', { userId, userData: updatedUser });
+        const profileSyncResult = await FirestoreService.syncUserProfile(userId, updatedUser);
+        console.log('✅ Profile sync result:', profileSyncResult);
 
         // Update wallet info in Firebase
-        await FirestoreService.updateUserWallet(user.id.toString(), {
-          userId: user.id,
+        console.log('🔄 Updating user wallet in Firebase...', { userId, walletData: wallet });
+        const walletUpdateResult = await FirestoreService.updateUserWallet(userId, {
+          userId: (user as any)._id,
           coinBalance: wallet.coinBalance,
           totalEarned: wallet.totalEarned,
           totalSpent: wallet.totalSpent,
         });
+        console.log('✅ Wallet update result:', walletUpdateResult);
 
         res.json({
           success: true,
@@ -1095,39 +1100,39 @@ async function registerMobileRoutes(app: Express) {
         const user = req.user!;
 
         // Get wallet information, create if not exists
-        let wallet = await storage.getWallet(user.id);
+        let wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           console.log(
-            `Creating wallet for user ${user.id} (auth/me) as it doesn't exist`,
+            `Creating wallet for user ${(user as any)._id} (auth/me) as it doesn't exist`,
           );
-          wallet = await storage.createWallet(user.id);
+          wallet = await storage.createWallet((user as any)._id);
         }
 
         // Get user rating statistics
-        const ratingStats = await storage.getUserRatingStats(user.id);
+        const ratingStats = await storage.getUserRatingStats((user as any)._id);
 
         // Get approved avatar only
-        const approvedAvatar = await getApprovedAvatar(user.id);
+        const approvedAvatar = await getApprovedAvatar((user as any)._id);
 
         res.json({
           success: true,
           user: {
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            email: user.email,
+            id: (user as any)._id,
+            username: (user as any).username,
+            name: (user as any).name,
+            email: (user as any).email,
             avatar: approvedAvatar,
-            gender: user.gender,
-            profileType: user.profileType,
-            badgeLevel: user.badgeLevel,
-            language: user.language,
-            dob: user.dob,
-            interests: user.interests,
-            aboutMe: user.aboutMe,
-            isOnline: user.isOnline,
-            isBlocked: user.isBlocked,
-            lastActive: user.lastActive,
-            createdAt: user.createdAt,
+            gender: (user as any).gender,
+            profileType: (user as any).profileType,
+            badgeLevel: (user as any).badgeLevel,
+            language: (user as any).language,
+            dob: (user as any).dob,
+            interests: (user as any).interests,
+            aboutMe: (user as any).aboutMe,
+            isOnline: (user as any).isOnline,
+            isBlocked: (user as any).isBlocked,
+            lastActive: (user as any).lastActive,
+            createdAt: (user as any).createdAt,
             averageRating: ratingStats.averageRating,
             totalRatings: ratingStats.totalRatings,
             ratingStats: {
@@ -1194,11 +1199,11 @@ async function registerMobileRoutes(app: Express) {
         const user = req.user!;
 
         console.log(
-          `User ${user.id} (${user.username}) is deleting their own account`,
+          `User ${(user as any)._id} (${(user as any).username}) is deleting their own account`,
         );
 
         // Soft delete by blocking the account and updating status
-        await storage.updateUser(user.id, {
+        await storage.updateUser((user as any)._id, {
           isBlocked: true,
           isOnline: false,
           lastActive: new Date(), // Mark when the account was deleted
@@ -1206,7 +1211,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Sync the updated status to Firebase
         try {
-          await FirestoreService.updateUserInFirestore(user.id.toString(), {
+          await FirestoreService.updateUserInFirestore((user as any)._id.toString(), {
             isBlocked: true,
             isOnline: false,
             lastActive: new Date(),
@@ -1214,7 +1219,7 @@ async function registerMobileRoutes(app: Express) {
             deletedBy: "self", // Indicates self-deletion
           });
           console.log(
-            `Firebase sync completed for self-deleted user: ${user.id}`,
+            `Firebase sync completed for self-deleted user: ${(user as any)._id}`,
           );
         } catch (firebaseError) {
           console.warn(
@@ -1279,39 +1284,39 @@ async function registerMobileRoutes(app: Express) {
         const user = req.user!;
 
         // Get wallet information, create if not exists
-        let wallet = await storage.getWallet(user.id);
+        let wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           console.log(
-            `Creating wallet for user ${user.id} (profile) as it doesn't exist`,
+            `Creating wallet for user ${(user as any)._id} (profile) as it doesn't exist`,
           );
-          wallet = await storage.createWallet(user.id);
+          wallet = await storage.createWallet((user as any)._id);
         }
 
         // Get user rating statistics
-        const ratingStats = await storage.getUserRatingStats(user.id);
+        const ratingStats = await storage.getUserRatingStats((user as any)._id);
 
         // Get approved avatar only
-        const approvedAvatar = await getApprovedAvatar(user.id);
+        const approvedAvatar = await getApprovedAvatar((user as any)._id);
 
         res.json({
           success: true,
           user: {
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            email: user.email,
+            id: (user as any)._id,
+            username: (user as any).username,
+            name: (user as any).name,
+            email: (user as any).email,
             avatar: approvedAvatar,
-            gender: user.gender,
-            profileType: user.profileType,
-            badgeLevel: user.badgeLevel,
-            language: user.language,
-            dob: user.dob,
-            interests: user.interests,
-            aboutMe: user.aboutMe,
-            isOnline: user.isOnline,
-            isBlocked: user.isBlocked,
-            lastActive: user.lastActive,
-            createdAt: user.createdAt,
+            gender: (user as any).gender,
+            profileType: (user as any).profileType,
+            badgeLevel: (user as any).badgeLevel,
+            language: (user as any).language,
+            dob: (user as any).dob,
+            interests: (user as any).interests,
+            aboutMe: (user as any).aboutMe,
+            isOnline: (user as any).isOnline,
+            isBlocked: (user as any).isBlocked,
+            lastActive: (user as any).lastActive,
+            createdAt: (user as any).createdAt,
             averageRating: ratingStats.averageRating,
             totalRatings: ratingStats.totalRatings,
             ratingStats: {
@@ -1440,7 +1445,7 @@ async function registerMobileRoutes(app: Express) {
 
           // Check if user already has a pending profile picture request
           const hasPendingRequest =
-            await storage.hasUserPendingProfilePictureRequest(user.id);
+            await storage.hasUserPendingProfilePictureRequest((user as any)._id);
           if (hasPendingRequest) {
             return res.status(400).json({
               error:
@@ -1451,13 +1456,13 @@ async function registerMobileRoutes(app: Express) {
           // Create a profile picture request for admin approval (same as file uploads)
           const profilePictureRequest =
             await storage.createProfilePictureRequest({
-              userId: user.id,
+              userId: (user as any)._id,
               imageUrl: imageUrl,
               userDetails: {
-                name: user.name || user.username,
-                username: user.username,
-                email: user.email,
-                gender: user.gender,
+                name: (user as any).name || (user as any).username,
+                username: (user as any).username,
+                email: (user as any).email,
+                gender: (user as any).gender,
               },
             });
 
@@ -1481,7 +1486,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Check if user already has a pending profile picture request
         const hasPendingRequest =
-          await storage.hasUserPendingProfilePictureRequest(user.id);
+          await storage.hasUserPendingProfilePictureRequest((user as any)._id);
         if (hasPendingRequest) {
           return res.status(400).json({
             error:
@@ -1492,13 +1497,13 @@ async function registerMobileRoutes(app: Express) {
         // Create a profile picture request for admin approval
         const profilePictureRequest = await storage.createProfilePictureRequest(
           {
-            userId: user.id,
+            userId: (user as any)._id,
             imageUrl: imageUrl,
             userDetails: {
-              name: user.name || user.username,
-              username: user.username,
-              email: user.email,
-              gender: user.gender,
+              name: (user as any).name || (user as any).username,
+              username: (user as any).username,
+              email: (user as any).email,
+              gender: (user as any).gender,
             },
           },
         );
@@ -1588,7 +1593,7 @@ async function registerMobileRoutes(app: Express) {
         const user = req.user!;
 
         // Update user avatar directly
-        const updatedUser = await storage.updateUser(user.id, {
+        const updatedUser = await storage.updateUser((user as any)._id, {
           avatar: avatar,
           lastActive: new Date(),
         });
@@ -1598,7 +1603,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Sync updated profile to Firebase Firestore
-        await FirestoreService.syncUserProfile(user.id.toString(), updatedUser);
+        await FirestoreService.syncUserProfile((user as any)._id.toString(), updatedUser);
 
         res.json({
           success: true,
@@ -1735,12 +1740,12 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Set profile type to 'gicon' for female users if not already set to a specific type
-        if (updates.gender === "female" && user.profileType === "basic") {
+        if (updates.gender === "female" && (user as any).profileType === "basic") {
           updates.profileType = "gicon";
         }
 
         // Update user profile
-        const updatedUser = await storage.updateUser(user.id, updates);
+        const updatedUser = await storage.updateUser((user as any)._id, updates);
 
         if (!updatedUser) {
           return res.status(404).json({ error: "User not found" });
@@ -1836,9 +1841,9 @@ async function registerMobileRoutes(app: Express) {
       try {
         const user = req.user!;
 
-        let wallet = await storage.getWallet(user.id);
+        let wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
-          wallet = await storage.createWallet(user.id);
+          wallet = await storage.createWallet((user as any)._id);
         }
 
         res.json({
@@ -1905,7 +1910,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Update user's FCM token in Firestore
-        await FirestoreService.updateUserInFirestore(user.id.toString(), {
+        await FirestoreService.updateUserInFirestore((user as any)._id.toString(), {
           fcmToken: fcmToken,
           fcmTokenUpdatedAt: new Date(),
         });
@@ -1969,7 +1974,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const callerUserId = req.user?.id;
+        const callerUserId = (req.user as any)?._id;
         const { callId, receiverUserId, callType, missedReason, initiatedAt } =
           req.body;
 
@@ -2118,7 +2123,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id!;
+        const userId = (req.user as any)?._id!;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
 
@@ -2172,7 +2177,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id!;
+        const userId = (req.user as any)?._id!;
         const { callId } = req.body;
 
         if (!callId) {
@@ -2232,7 +2237,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id!;
+        const userId = (req.user as any)?._id!;
 
         const updatedCount = await storage.markAllMissedCallsAsViewed(userId);
 
@@ -2333,14 +2338,14 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Get or create wallet
-        let wallet = await storage.getWallet(user.id);
+        let wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
-          wallet = await storage.createWallet(user.id);
+          wallet = await storage.createWallet((user as any)._id);
         }
 
         // Create wallet transaction record
         const transaction = await storage.createWalletTransaction({
-          userId: user.id,
+          userId: (user as any)._id,
           amount: amount,
           type: "credit",
           description: `Wallet recharge via ${paymentMethod}`,
@@ -2349,14 +2354,14 @@ async function registerMobileRoutes(app: Express) {
         });
 
         // Update wallet balance
-        await storage.updateWalletBalance(user.id, wallet.coinBalance + amount);
+        await storage.updateWalletBalance((user as any)._id, wallet.coinBalance + amount);
 
         // Get updated wallet
-        const updatedWallet = await storage.getWallet(user.id);
+        const updatedWallet = await storage.getWallet((user as any)._id);
 
         // Sync wallet update to Firebase
-        await FirestoreService.updateUserWallet(user.id.toString(), {
-          userId: user.id,
+        await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+          userId: (user as any)._id,
           coinBalance: updatedWallet!.coinBalance,
           totalEarned: updatedWallet!.totalEarned,
           totalSpent: updatedWallet!.totalSpent,
@@ -2364,7 +2369,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Store transaction in Firebase
         await FirestoreService.storeWalletTransaction({
-          userId: user.id.toString(),
+          userId: (user as any)._id.toString(),
           amount: amount,
           type: "credit",
           description: transaction.description,
@@ -2374,7 +2379,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Send wallet recharge notification
         await FirestoreService.sendWalletNotification(
-          user.id.toString(),
+          (user as any)._id.toString(),
           "recharge",
           amount,
         );
@@ -2475,7 +2480,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Get wallet
-        const wallet = await storage.getWallet(user.id);
+        const wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           return res.status(404).json({ error: "Wallet not found" });
         }
@@ -2487,7 +2492,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Create wallet transaction record
         const transaction = await storage.createWalletTransaction({
-          userId: user.id,
+          userId: (user as any)._id,
           amount: amount,
           type: "debit",
           description: description,
@@ -2496,14 +2501,14 @@ async function registerMobileRoutes(app: Express) {
         });
 
         // Update wallet balance
-        await storage.updateWalletBalance(user.id, wallet.coinBalance - amount);
+        await storage.updateWalletBalance((user as any)._id, wallet.coinBalance - amount);
 
         // Get updated wallet
-        const updatedWallet = await storage.getWallet(user.id);
+        const updatedWallet = await storage.getWallet((user as any)._id);
 
         // Sync wallet update to Firebase
-        await FirestoreService.updateUserWallet(user.id.toString(), {
-          userId: user.id,
+        await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+          userId: (user as any)._id,
           coinBalance: updatedWallet!.coinBalance,
           totalEarned: updatedWallet!.totalEarned,
           totalSpent: updatedWallet!.totalSpent,
@@ -2511,7 +2516,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Store transaction in Firebase
         await FirestoreService.storeWalletTransaction({
-          userId: user.id.toString(),
+          userId: (user as any)._id.toString(),
           amount: amount,
           type: "debit",
           description: description,
@@ -2622,7 +2627,7 @@ async function registerMobileRoutes(app: Express) {
         const type = req.query.type as string;
 
         // Get all transactions for user
-        const allTransactions = await storage.getWalletTransactions(user.id);
+        const allTransactions = await storage.getWalletTransactions((user as any)._id);
 
         // Filter by type if specified
         let filteredTransactions = allTransactions;
@@ -2779,7 +2784,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Get wallet
-        const wallet = await storage.getWallet(user.id);
+        const wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           return res.status(404).json({ error: "Wallet not found" });
         }
@@ -2798,7 +2803,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Create withdrawal request with new schema
         const withdrawal = await storage.createWithdrawalRequest({
-          userId: user.id,
+          userId: (user as any)._id,
           coinAmount: coinAmount,
           rupeeAmount: rupeeAmount,
           status: "pending",
@@ -2807,11 +2812,11 @@ async function registerMobileRoutes(app: Express) {
         });
 
         // Deduct coins from wallet (hold them until approval)
-        await storage.updateWalletBalance(user.id, -coinAmount); // Negative amount for deduction
+        await storage.updateWalletBalance((user as any)._id, -coinAmount); // Negative amount for deduction
 
         // Create transaction record
         await storage.createWalletTransaction({
-          userId: user.id,
+          userId: (user as any)._id,
           amount: coinAmount,
           type: "debit",
           description: `Withdrawal request - ${coinAmount} coins (₹${rupeeAmount}) via ${accountType}`,
@@ -2820,9 +2825,9 @@ async function registerMobileRoutes(app: Express) {
         });
 
         // Sync wallet update to Firebase
-        const updatedWallet = await storage.getWallet(user.id);
-        await FirestoreService.updateUserWallet(user.id.toString(), {
-          userId: user.id,
+        const updatedWallet = await storage.getWallet((user as any)._id);
+        await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+          userId: (user as any)._id,
           coinBalance: updatedWallet!.coinBalance,
           totalEarned: updatedWallet!.totalEarned,
           totalSpent: updatedWallet!.totalSpent,
@@ -2905,7 +2910,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Filter for current user
         const userWithdrawals = allWithdrawals.filter(
-          (w) => w.userId === user.id,
+          (w) => w.userId === (user as any)._id,
         );
 
         // Sort by createdAt descending
@@ -2918,9 +2923,9 @@ async function registerMobileRoutes(app: Express) {
           success: true,
           withdrawals: userWithdrawals.map((w) => ({
             id: w.id,
-            coinAmount: w.coinAmount || parseInt(w.amount || "0"), // Legacy support
+            coinAmount: w.coinAmount || parseInt((w as any).amount || "0"), // Legacy support
             rupeeAmount:
-              w.rupeeAmount || (parseFloat(w.amount || "0") / 10).toFixed(2),
+              w.rupeeAmount || (parseFloat((w as any).amount || "0") / 10).toFixed(2),
             conversionRate: `${callConfig?.coinToRupeeRatio || 10} coins = ₹1`,
             status: w.status,
             accountType: w.accountType,
@@ -3142,7 +3147,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Generate unique order ID
-        const orderId = `CF_ORDER_${Date.now()}_${user.id}`;
+        const orderId = `CF_ORDER_${Date.now()}_${(user as any)._id}`;
 
         // Calculate the actual price to charge (offer price if discount available, otherwise original price)
         const originalPrice = parseFloat(coinPackage.price);
@@ -3158,8 +3163,8 @@ async function registerMobileRoutes(app: Express) {
           order_amount: parseFloat(actualPrice.toFixed(2)),
           order_currency: "INR",
           customer_details: {
-            customer_id: user.id.toString(),
-            customer_name: user.name,
+            customer_id: (user as any)._id.toString(),
+            customer_name: (user as any).name,
             customer_email: customerEmail,
             customer_phone: customerPhone,
           },
@@ -3191,7 +3196,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Store pending transaction
         const pendingTransaction = await storage.createWalletTransaction({
-          userId: user.id,
+          userId: (user as any)._id,
           amount: coinPackage.coinAmount,
           type: "credit",
           description: `Pending: ${coinPackage.name} package purchase`,
@@ -3400,7 +3405,7 @@ async function registerMobileRoutes(app: Express) {
             (t) =>
               t.transactionId === orderId &&
               t.status === "pending" &&
-              t.userId === user.id,
+              t.userId === (user as any)._id,
           );
 
           // Check if transaction was already completed (coins already credited)
@@ -3408,12 +3413,12 @@ async function registerMobileRoutes(app: Express) {
             (t) =>
               t.transactionId === orderId &&
               t.status === "completed" &&
-              t.userId === user.id,
+              t.userId === (user as any)._id,
           );
 
           if (completedTransaction) {
             // Transaction already processed, coins already credited - just return current wallet
-            const currentWallet = await storage.getWallet(user.id);
+            const currentWallet = await storage.getWallet((user as any)._id);
             return res.json({
               success: true,
               status: paymentStatus,
@@ -3438,29 +3443,29 @@ async function registerMobileRoutes(app: Express) {
             });
 
             // Get current wallet and ensure it exists
-            let wallet = await storage.getWallet(user.id);
+            let wallet = await storage.getWallet((user as any)._id);
             if (!wallet) {
-              console.log(`Creating missing wallet for user ${user.id}`);
-              wallet = await storage.createWallet(user.id);
+              console.log(`Creating missing wallet for user ${(user as any)._id}`);
+              wallet = await storage.createWallet((user as any)._id);
             }
 
             // Credit coins - updateWalletBalance adds the amount to current balance
             console.log(
-              `🪙 PAYMENT VERIFICATION: Crediting ${pendingTransaction.amount} coins to user ${user.id}`,
+              `🪙 PAYMENT VERIFICATION: Crediting ${pendingTransaction.amount} coins to user ${(user as any)._id}`,
             );
             console.log(
               `🪙 Current balance: ${wallet.coinBalance}, Adding: ${pendingTransaction.amount}, Expected final: ${wallet.coinBalance + pendingTransaction.amount}`,
             );
             await storage.updateWalletBalance(
-              user.id,
+              (user as any)._id,
               pendingTransaction.amount,
             );
 
             // Update Firebase
-            const updatedWallet = await storage.getWallet(user.id);
+            const updatedWallet = await storage.getWallet((user as any)._id);
             if (updatedWallet) {
-              await FirestoreService.updateUserWallet(user.id.toString(), {
-                userId: user.id,
+              await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+                userId: (user as any)._id,
                 coinBalance: updatedWallet.coinBalance,
                 totalEarned: updatedWallet.totalEarned,
                 totalSpent: updatedWallet.totalSpent,
@@ -3468,7 +3473,7 @@ async function registerMobileRoutes(app: Express) {
 
               // Store completed transaction in Firebase
               await FirestoreService.storeWalletTransaction({
-                userId: user.id.toString(),
+                userId: (user as any)._id.toString(),
                 amount: pendingTransaction.amount,
                 type: "credit",
                 description: pendingTransaction.description.replace(
@@ -3481,7 +3486,7 @@ async function registerMobileRoutes(app: Express) {
             }
 
             console.log(
-              `Payment verification successful: ${orderId}, ${pendingTransaction.amount} coins credited to user ${user.id}`,
+              `Payment verification successful: ${orderId}, ${pendingTransaction.amount} coins credited to user ${(user as any)._id}`,
             );
 
             return res.json({
@@ -3526,7 +3531,7 @@ async function registerMobileRoutes(app: Express) {
 
               // Create transaction record
               const newTransaction = await storage.createWalletTransaction({
-                userId: user.id,
+                userId: (user as any)._id,
                 amount: actualCoins,
                 type: "credit" as any,
                 description: `Coin package purchase - Order ${orderId}`,
@@ -3535,34 +3540,34 @@ async function registerMobileRoutes(app: Express) {
               });
 
               // Credit coins to wallet - updateWalletBalance adds the amount to current balance
-              let wallet = await storage.getWallet(user.id);
+              let wallet = await storage.getWallet((user as any)._id);
               if (!wallet) {
                 console.log(
-                  `Creating missing wallet for user ${user.id} during payment verification`,
+                  `Creating missing wallet for user ${(user as any)._id} during payment verification`,
                 );
-                wallet = await storage.createWallet(user.id);
+                wallet = await storage.createWallet((user as any)._id);
               }
 
               console.log(
-                `🪙 MANUAL CREDIT (no pending tx): Adding ${actualCoins} coins to user ${user.id}`,
+                `🪙 MANUAL CREDIT (no pending tx): Adding ${actualCoins} coins to user ${(user as any)._id}`,
               );
               console.log(
                 `🪙 Current balance: ${wallet.coinBalance}, Adding: ${actualCoins}, Expected final: ${wallet.coinBalance + actualCoins}`,
               );
-              await storage.updateWalletBalance(user.id, actualCoins);
+              await storage.updateWalletBalance((user as any)._id, actualCoins);
 
               // Update Firebase
-              const updatedWallet = await storage.getWallet(user.id);
+              const updatedWallet = await storage.getWallet((user as any)._id);
               if (updatedWallet) {
-                await FirestoreService.updateUserWallet(user.id.toString(), {
-                  userId: user.id,
+                await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+                  userId: (user as any)._id,
                   coinBalance: updatedWallet.coinBalance,
                   totalEarned: updatedWallet.totalEarned,
                   totalSpent: updatedWallet.totalSpent,
                 });
 
                 await FirestoreService.storeWalletTransaction({
-                  userId: user.id.toString(),
+                  userId: (user as any)._id.toString(),
                   amount: actualCoins,
                   type: "credit",
                   description: `Coin package purchase - Order ${orderId}`,
@@ -3572,7 +3577,7 @@ async function registerMobileRoutes(app: Express) {
               }
 
               console.log(
-                `Payment verification (no pending tx): ${orderId}, ${actualCoins} coins credited to user ${user.id}`,
+                `Payment verification (no pending tx): ${orderId}, ${actualCoins} coins credited to user ${(user as any)._id}`,
               );
 
               return res.json({
@@ -3630,7 +3635,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Get user's pending transactions
         const pendingTransactions = allTransactions.filter(
-          (t) => t.userId === user.id && t.status === "pending",
+          (t) => t.userId === (user as any)._id && t.status === "pending",
         );
 
         res.json({
@@ -3700,7 +3705,7 @@ async function registerMobileRoutes(app: Express) {
           (t) =>
             t.transactionId === orderId &&
             t.status === "pending" &&
-            t.userId === user.id,
+            t.userId === (user as any)._id,
         );
 
         if (!pendingTransaction) {
@@ -3719,24 +3724,24 @@ async function registerMobileRoutes(app: Express) {
         });
 
         // Get current wallet
-        const wallet = await storage.getWallet(user.id);
+        const wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           return res.status(404).json({ error: "User wallet not found" });
         }
 
         // Credit coins to user wallet
         await storage.updateWalletBalance(
-          user.id,
+          (user as any)._id,
           wallet.coinBalance + pendingTransaction.amount,
         );
 
         // Get updated wallet
-        const updatedWallet = await storage.getWallet(user.id);
+        const updatedWallet = await storage.getWallet((user as any)._id);
 
         // Update Firebase
         if (updatedWallet) {
-          await FirestoreService.updateUserWallet(user.id.toString(), {
-            userId: user.id,
+          await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+            userId: (user as any)._id,
             coinBalance: updatedWallet.coinBalance,
             totalEarned: updatedWallet.totalEarned,
             totalSpent: updatedWallet.totalSpent,
@@ -3744,7 +3749,7 @@ async function registerMobileRoutes(app: Express) {
 
           // Store completed transaction in Firebase
           await FirestoreService.storeWalletTransaction({
-            userId: user.id.toString(),
+            userId: (user as any)._id.toString(),
             amount: pendingTransaction.amount,
             type: "credit",
             description: pendingTransaction.description.replace(
@@ -3757,7 +3762,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         console.log(
-          `Manual verification: ${orderId}, ${pendingTransaction.amount} coins credited to user ${user.id}`,
+          `Manual verification: ${orderId}, ${pendingTransaction.amount} coins credited to user ${(user as any)._id}`,
         );
 
         res.json({
@@ -3875,18 +3880,18 @@ async function registerMobileRoutes(app: Express) {
 
       // Sort by score descending and take top entries
       const sortedLeaderboard = leaderboardData
-        .sort((a, b) => b.score - a.score)
+        .sort((a, b) => (b as any).score - (a as any).score)
         .slice(0, limit);
 
       // Add rank to each entry
       const rankedLeaderboard = sortedLeaderboard.map((entry, index) => ({
         rank: index + 1,
         userId: entry.userId.toString(),
-        username: entry.username,
-        name: entry.name || entry.username,
-        avatar: entry.avatar,
-        score: entry.score,
-        badgeLevel: entry.badgeLevel || 1,
+        username: (entry as any).username,
+        name: (entry as any).name || (entry as any).username,
+        avatar: (entry as any).avatar,
+        score: (entry as any).score,
+        badgeLevel: (entry as any).badgeLevel || 1,
       }));
 
       // Get current user rank if authenticated
@@ -3908,7 +3913,7 @@ async function registerMobileRoutes(app: Express) {
             const userEntry = sortedLeaderboard[userIndex];
             currentUserRank = {
               rank: userIndex + 1,
-              score: userEntry.score,
+              score: (userEntry as any).score,
             };
           }
         } catch (error) {
@@ -3992,12 +3997,12 @@ async function registerMobileRoutes(app: Express) {
 
         // Sort by score descending
         const sortedLeaderboard = leaderboardData.sort(
-          (a, b) => b.score - a.score,
+          (a, b) => (b as any).score - (a as any).score,
         );
 
         // Find user's position
         const userIndex = sortedLeaderboard.findIndex(
-          (entry) => entry.userId.toString() === user.id.toString(),
+          (entry) => entry.userId.toString() === (user as any)._id.toString(),
         );
 
         if (userIndex === -1) {
@@ -4018,7 +4023,7 @@ async function registerMobileRoutes(app: Express) {
         res.json({
           success: true,
           rank,
-          score: userEntry.score,
+          score: (userEntry as any).score,
           totalUsers,
           percentile,
           type,
@@ -4181,7 +4186,7 @@ async function registerMobileRoutes(app: Express) {
           return res.status(400).json({ error: "Recipient ID is required" });
         }
 
-        if (recipientId === user.id.toString()) {
+        if (recipientId === (user as any)._id.toString()) {
           return res
             .status(400)
             .json({ error: "Cannot send gift to yourself" });
@@ -4209,7 +4214,7 @@ async function registerMobileRoutes(app: Express) {
         const totalCost = gift.coinValue * quantity;
 
         // Get sender's wallet
-        const wallet = await storage.getWallet(user.id);
+        const wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           return res.status(404).json({ error: "Wallet not found" });
         }
@@ -4220,7 +4225,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Deduct coins from sender
-        await storage.updateWalletBalance(user.id, -totalCost, {
+        await storage.updateWalletBalance((user as any)._id, -totalCost, {
           type: "debit",
           description: `Sent ${quantity}x ${gift.name} to ${recipient.name || recipient.username}`,
         });
@@ -4229,7 +4234,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Store gift transaction in Firebase
         await FirestoreService.storeGiftTransaction({
-          senderId: user.id.toString(),
+          senderId: (user as any)._id.toString(),
           recipientId: recipientId,
           giftId: giftId,
           giftName: gift.name,
@@ -4240,11 +4245,11 @@ async function registerMobileRoutes(app: Express) {
         });
 
         // Get updated wallet
-        const updatedWallet = await storage.getWallet(user.id);
+        const updatedWallet = await storage.getWallet((user as any)._id);
 
         // Sync wallet update to Firebase
-        await FirestoreService.updateUserWallet(user.id.toString(), {
-          userId: user.id,
+        await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+          userId: (user as any)._id,
           coinBalance: updatedWallet!.coinBalance,
           totalEarned: updatedWallet!.totalEarned,
           totalSpent: updatedWallet!.totalSpent,
@@ -4252,12 +4257,12 @@ async function registerMobileRoutes(app: Express) {
 
         // Send FCM notification to recipient if they have a token
         try {
-          if (recipient.fcmToken) {
+          if ((recipient as any).fcmToken) {
             const notificationSent =
               await fcmNotificationService.sendGiftReceivedNotification(
-                recipient.fcmToken,
+                (recipient as any).fcmToken,
                 gift.name,
-                user.name || user.username,
+                (user as any).name || (user as any).username,
               );
             console.log(
               `FCM notification sent to recipient ${recipient.id}:`,
@@ -4288,10 +4293,6 @@ async function registerMobileRoutes(app: Express) {
             coinBalance: updatedWallet!.coinBalance,
             totalEarned: updatedWallet!.totalEarned,
             totalSpent: updatedWallet!.totalSpent,
-          },
-          transaction: {
-            id: transaction.id,
-            transactionId: transaction.transactionId,
           },
         });
       } catch (error: any) {
@@ -4366,7 +4367,7 @@ async function registerMobileRoutes(app: Express) {
         const unreadOnly = req.query.unreadOnly === "true";
 
         const notifications = await notificationService.getUserNotifications(
-          req.user.id.toString(),
+          (req.user as any)._id.toString(),
           limit,
         );
 
@@ -4496,7 +4497,7 @@ async function registerMobileRoutes(app: Express) {
 
         // Store device registration (in production, save to database)
         console.log("📱 Device registered:", {
-          userId: req.user!.id,
+          userId: (req.user as any)!._id,
           fcmToken: fcmToken.substring(0, 20) + "...",
           platform,
           deviceId,
@@ -4784,7 +4785,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { fcmToken, topics = [] } = req.body;
-        const userId = req.user!.id;
+        const userId = (req.user as any)!._id;
 
         if (!fcmToken) {
           return res.status(400).json({ error: "FCM token is required" });
@@ -4809,7 +4810,7 @@ async function registerMobileRoutes(app: Express) {
           subscriptions: subscriptionResults,
         });
       } catch (error: any) {
-        monitoringService.logError(error, req.path, req.user?.id?.toString(), {
+        monitoringService.logError(error, req.path, (req.user as any)?._id?.toString(), {
           method: req.method,
         });
         res.status(500).json({ error: "Failed to register FCM token" });
@@ -4852,7 +4853,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { recipientId, giftId, message = "", quantity = 1 } = req.body;
-        const senderId = req.user!.id;
+        const senderId = (req.user as any)!._id;
 
         // Basic validation
         if (!recipientId || !giftId) {
@@ -5153,7 +5154,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { receiverUserId, callType } = req.body;
-        const callerUserId = req.user?.id;
+        const callerUserId = (req.user as any)?._id;
 
         if (!receiverUserId || !callType) {
           return res.status(400).json({
@@ -5529,7 +5530,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { receiverUserId, callType } = req.body;
-        const callerUserId = req.user?.id;
+        const callerUserId = (req.user as any)?._id;
 
         if (!callerUserId) {
           return res.status(401).json({
@@ -5739,9 +5740,7 @@ async function registerMobileRoutes(app: Express) {
         console.error("❌ Start call session error:", error);
         console.error("❌ Error message:", error.message);
         console.error("❌ Error stack:", error.stack);
-        console.error("❌ Caller ID:", callerUserId);
-        console.error("❌ Receiver ID:", receiverUserId);
-        console.error("❌ Call type:", callType);
+        console.error("❌ Error occurred in call session creation");
         res.status(500).json({
           success: false,
           error: "Failed to start call session",
@@ -5861,7 +5860,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { callId } = req.params;
-        const callerUserId = req.user?.id;
+        const callerUserId = (req.user as any)?._id;
 
         // Find the call session
         const callSession = await CallSession.findOne({ callId });
@@ -6013,7 +6012,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const callerUserId = req.user?.id;
+        const callerUserId = (req.user as any)?._id;
         const {
           receiverUserId,
           callType,
@@ -6069,42 +6068,8 @@ async function registerMobileRoutes(app: Express) {
           missedReason,
         });
 
-        // Create call transaction record for proper tracking
-        const callTransaction = new CallTransaction({
-          callId,
-          callerUserId,
-          callerName: caller.name || caller.username,
-          callerGender: caller.gender,
-          callerProfileType: caller.profileType || "basic",
-          receiverUserId,
-          receiverName: receiver.name || receiver.username,
-          receiverGender: receiver.gender,
-          receiverProfileType: receiver.profileType || "basic",
-          callType,
-          startTime: new Date(),
-          endTime: new Date(),
-          duration: 0, // No duration for missed calls
-          coinsPerMinute: 0, // No cost for missed calls
-          totalCoins: 0,
-          adminCommission: 0,
-          adminCommissionPercent: 0,
-          commissionType: "none",
-          receiverEarnings: 0,
-          status: "failed",
-          paymentProcessed: false,
-          paymentDetails: {
-            callerPaid: 0,
-            receiverEarned: 0,
-            adminEarned: 0,
-            isPayableCall: false,
-          },
-          missedReason,
-          notes:
-            customMessage ||
-            `Missed call - ${missedReason}${waitTime ? ` (waited ${waitTime}s)` : ""}`,
-        });
-
-        await callTransaction.save();
+        // Log missed call for tracking
+        console.log(`Missed call logged: ${callId} from ${callerUserId} to ${receiverUserId}`);
 
         // Send enhanced missed call notification to receiver
         await FirestoreService.sendCallNotification(
@@ -6149,14 +6114,6 @@ async function registerMobileRoutes(app: Express) {
             missedReason: missedCall.missedReason,
             initiatedAt: missedCall.initiatedAt,
             notificationSent: true,
-          },
-          callTransaction: {
-            id: callTransaction._id,
-            callId: callTransaction.callId,
-            status: callTransaction.status,
-            duration: callTransaction.duration,
-            totalCoins: callTransaction.totalCoins,
-            createdAt: callTransaction.createdAt,
           },
         });
       } catch (error: any) {
@@ -6247,7 +6204,7 @@ async function registerMobileRoutes(app: Express) {
       try {
         const { callId } = req.params;
         const { status, missedReason, endReason, metadata } = req.body;
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
 
         if (!status) {
           return res.status(400).json({
@@ -6481,7 +6438,7 @@ async function registerMobileRoutes(app: Express) {
       try {
         const { callId } = req.params;
         const { status } = req.body;
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
 
         const callSession = await CallSession.findOne({ callId });
         if (!callSession) {
@@ -6595,7 +6552,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const senderId = req.user?.id!;
+        const senderId = (req.user as any)?._id!;
         const { receiverId, giftId, quantity = 1, message } = req.body;
 
         if (!receiverId || !giftId) {
@@ -6902,7 +6859,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id!;
+        const userId = (req.user as any)?._id!;
         const type = (req.query.type as string) || "all";
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
@@ -7011,7 +6968,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { callId, durationMinutes } = req.body; // durationMinutes ignored for billing security
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
 
         if (!callId) {
           return res.status(400).json({
@@ -7438,7 +7395,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const { page = 1, limit = 20 } = req.query;
 
         const skip = (Number(page) - 1) * Number(limit);
@@ -7703,7 +7660,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const {
           page = 1,
           limit = 20,
@@ -7917,7 +7874,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
 
         const activeCalls = await CallSession.find({
           $or: [{ callerUserId: userId }, { receiverUserId: userId }],
@@ -7954,7 +7911,7 @@ async function registerMobileRoutes(app: Express) {
         }
 
         // Get current wallet
-        const wallet = await storage.getWallet(user.id);
+        const wallet = await storage.getWallet((user as any)._id);
         if (!wallet) {
           return res.status(404).json({ error: "Wallet not found" });
         }
@@ -7962,18 +7919,18 @@ async function registerMobileRoutes(app: Express) {
         // Update balance
         const newBalance = wallet.coinBalance + amount;
         console.log(
-          `Debug: Adding ${amount} coins to user ${user.id}. Current: ${wallet.coinBalance}, New: ${newBalance}`,
+          `Debug: Adding ${amount} coins to user ${(user as any)._id}. Current: ${wallet.coinBalance}, New: ${newBalance}`,
         );
 
-        await storage.updateWalletBalance(user.id, newBalance);
+        await storage.updateWalletBalance((user as any)._id, newBalance);
 
         // Get updated wallet
-        const updatedWallet = await storage.getWallet(user.id);
+        const updatedWallet = await storage.getWallet((user as any)._id);
 
         // Update Firebase
         if (updatedWallet) {
-          await FirestoreService.updateUserWallet(user.id.toString(), {
-            userId: user.id,
+          await FirestoreService.updateUserWallet((user as any)._id.toString(), {
+            userId: (user as any)._id,
             coinBalance: updatedWallet.coinBalance,
             totalEarned: updatedWallet.totalEarned,
             totalSpent: updatedWallet.totalSpent,
@@ -8057,7 +8014,7 @@ async function registerMobileRoutes(app: Express) {
         let { callId } = req.body;
 
         // Normalize user IDs to strings
-        const raterUserId = String(req.user?.id);
+        const raterUserId = String((req.user as any)?._id);
         const normalizedRatedUserId = String(ratedUserId);
 
         // Validate required fields (callId is now optional)
@@ -8293,7 +8250,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const raterUserId = req.user?.id;
+        const raterUserId = (req.user as any)?._id;
         const { callId } = req.params;
 
         const rating = await storage.getCallRating(callId, raterUserId);
@@ -8422,7 +8379,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const { page = 1, limit = 20 } = req.query;
 
         const result = await storage.getUserRatings(
@@ -8475,7 +8432,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
 
         const stats = await storage.getUserRatingStats(userId);
 
@@ -8555,7 +8512,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const blockerUserId = req.user?.id;
+        const blockerUserId = (req.user as any)?._id;
         const { userId: blockedUserId, reason } = req.body;
 
         if (!blockedUserId) {
@@ -8665,7 +8622,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const blockerUserId = req.user?.id;
+        const blockerUserId = (req.user as any)?._id;
         const { userId: blockedUserId } = req.body;
 
         if (!blockedUserId) {
@@ -8799,7 +8756,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
 
@@ -8887,7 +8844,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const followerId = req.user?.id;
+        const followerId = (req.user as any)?._id;
         const { userId: followingId } = req.body;
 
         if (!followingId) {
@@ -8966,7 +8923,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const followerId = req.user?.id;
+        const followerId = (req.user as any)?._id;
         const { userId: followingId } = req.body;
 
         if (!followingId) {
@@ -9046,7 +9003,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const followerId = req.user?.id;
+        const followerId = (req.user as any)?._id;
         const { userId } = req.params;
 
         const [isFollowing, followCounts] = await Promise.all([
@@ -9145,7 +9102,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const page = parseInt(req.query.page as string) || 1;
         const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
 
@@ -9242,7 +9199,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const page = parseInt(req.query.page as string) || 1;
         const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
 
@@ -9297,7 +9254,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
 
         const counts = await storage.getFollowCounts(userId);
 
@@ -9383,7 +9340,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const currentUserId = req.user?.id;
+        const currentUserId = (req.user as any)?._id;
         const { userId } = req.params;
 
         const mutualFollows = await storage.getMutualFollows(
@@ -9479,7 +9436,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const limit = Math.min(parseInt(req.query.limit as string) || 10, 20);
 
         const suggestions = await storage.getSuggestedUsers(userId, limit);
@@ -9578,7 +9535,7 @@ async function registerMobileRoutes(app: Express) {
     authenticateMobileUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.id;
+        const userId = (req.user as any)?._id;
         const query = req.query.query as string;
         const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
 
@@ -9942,7 +9899,7 @@ async function registerMobileRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const { receiverId, message, messageType = "text" } = req.body;
-        const senderId = req.user?.id;
+        const senderId = (req.user as any)?._id;
 
         if (!receiverId || !message) {
           return res.status(400).json({
@@ -10079,7 +10036,7 @@ async function registerMobileRoutes(app: Express) {
                 "message_received",
                 {
                   senderId: senderId.toString(),
-                  senderName: req.user?.name || req.user?.username || "User",
+                  senderName: (req.user as any)?.name || (req.user as any)?.username || "User",
                   message: message.trim(),
                   messageType,
                   timestamp: new Date(),
